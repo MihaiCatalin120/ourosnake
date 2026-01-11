@@ -33,8 +33,6 @@ void updateSnakePosition(int *grid, struct Snake *snake) {
     printf("[DEBUG]: Head is now x:%f y:%f\n", snake->head.x, snake->head.y);
 }
 
-void checkSnakeCollision(int *grid, struct Snake *snake) {}
-
 void updateCellLives(int *grid, struct Snake snake) {
   for (size_t y = 0; y < WINDOW_HEIGHT / GRID_CELL_SIZE; y += 1) {
     for (size_t x = 0; x < WINDOW_WIDTH / GRID_CELL_SIZE; x += 1) {

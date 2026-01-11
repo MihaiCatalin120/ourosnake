@@ -128,5 +128,3 @@ src/platforms
 .github
 .git
 
-raylib*
-raymath*
