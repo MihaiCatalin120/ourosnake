@@ -9,39 +9,47 @@
 #define WINDOW_WIDTH 800
 #define WINDOW_HEIGHT 600
 #define GRID_CELL_SIZE 100
-#define DEBUG_MODE true
+#define DEBUG_MODE false
+#define TIME_PER_TURN 0.5f
 
-void updateSnakePosition(int *grid, Vector2 *head) {
-  printf("update snake called \n");
+struct Snake {
+  Vector2 head;
+  Vector2 direction;
+  int length;
+};
 
-  head->x += 1;
-  printf("head increased\n");
-  if (head->x > WINDOW_WIDTH * 1.0f / GRID_CELL_SIZE)
-    head->x = 0;
-  if (head->y > WINDOW_HEIGHT * 1.0f / GRID_CELL_SIZE)
-    head->y = 0;
+void updateSnakePosition(int *grid, struct Snake *snake) {
+  snake->head = Vector2Add(snake->head, snake->direction);
+  if (snake->head.x >= WINDOW_WIDTH * 1.0f / GRID_CELL_SIZE)
+    snake->head.x = 0;
+  if (snake->head.x < 0)
+    snake->head.x = WINDOW_WIDTH * 1.0f / GRID_CELL_SIZE - 1;
+  if (snake->head.y >= WINDOW_HEIGHT * 1.0f / GRID_CELL_SIZE)
+    snake->head.y = 0;
+  if (snake->head.y < 0)
+    snake->head.y = WINDOW_HEIGHT * 1.0f / GRID_CELL_SIZE - 1;
 
   if (DEBUG_MODE)
-    printf("[DEBUG]: Head is now x:%f y:%f\n", head->x, head->y);
+    printf("[DEBUG]: Head is now x:%f y:%f\n", snake->head.x, snake->head.y);
 }
 
-void updateCellLives(int *grid, Vector2 head) {
+void checkSnakeCollision(int *grid, struct Snake *snake) {}
+
+void updateCellLives(int *grid, struct Snake snake) {
   for (size_t y = 0; y < WINDOW_HEIGHT / GRID_CELL_SIZE; y += 1) {
     for (size_t x = 0; x < WINDOW_WIDTH / GRID_CELL_SIZE; x += 1) {
       const int gridPosTranslated = y * WINDOW_WIDTH + x;
 
-      if ((int)head.x == x && (int)head.y == y) {
+      if ((int)snake.head.x == x && (int)snake.head.y == y) {
         if (grid[gridPosTranslated] == 0)
-          grid[gridPosTranslated] = 8;
-        // else
-        //   WindowShouldClose();
-      }
-      if (grid[gridPosTranslated] > 0) {
+          grid[gridPosTranslated] = snake.length;
+        else {
+          printf("ouch");
+          WindowShouldClose();
+        }
+      } else if (grid[gridPosTranslated] > 0) {
         grid[gridPosTranslated] -= 1;
       }
-
-      // DrawRectangle(x * GRID_CELL_SIZE + 1, y * GRID_CELL_SIZE + 1,
-      //               GRID_CELL_SIZE - 1, GRID_CELL_SIZE - 1, currentPosColor);
     }
   }
 }
@@ -88,6 +96,52 @@ void DrawObjects(int *grid) {
   }
 }
 
+bool isValueInArray(int value, int array[], int length) {
+  for (size_t i = 0; i < length; i++) {
+    if (value == array[i])
+      return true;
+  }
+
+  return false;
+}
+
+void checkForDirectionChange(struct Snake *snake) {
+  int key = GetKeyPressed();
+
+  if (key == KEY_NULL)
+    return;
+
+  // Up, Right, Down, Left
+  Vector2 directions[4] = {{0, -1}, {1, 0}, {0, 1}, {-1, 0}};
+  int upCases[2] = {KEY_UP, KEY_W};
+  int rightCases[2] = {KEY_RIGHT, KEY_D};
+  int downCases[2] = {KEY_DOWN, KEY_S};
+  int leftCases[2] = {KEY_LEFT, KEY_A};
+
+  if (isValueInArray(key, upCases, sizeof(upCases) / sizeof(upCases[0]))) {
+    snake->direction = directions[0];
+    return;
+  }
+
+  if (isValueInArray(key, rightCases,
+                     sizeof(rightCases) / sizeof(rightCases[0]))) {
+    snake->direction = directions[1];
+    return;
+  }
+
+  if (isValueInArray(key, downCases,
+                     sizeof(downCases) / sizeof(downCases[0]))) {
+    snake->direction = directions[2];
+    return;
+  }
+
+  if (isValueInArray(key, leftCases,
+                     sizeof(leftCases) / sizeof(leftCases[0]))) {
+    snake->direction = directions[3];
+    return;
+  }
+}
+
 // TODO: Configure LSP to work on current folder structure without any hacks
 // (currently duplicating header files into source code directory just for LSP)
 int main() {
@@ -96,27 +150,38 @@ int main() {
   int *grid = (int *)MemAlloc(WINDOW_WIDTH * WINDOW_HEIGHT / GRID_CELL_SIZE *
                               sizeof(int));
 
+  // Initialize grid
   for (size_t y = 0; y < WINDOW_HEIGHT / GRID_CELL_SIZE; y += 1) {
     for (size_t x = 0; x < WINDOW_WIDTH / GRID_CELL_SIZE; x += 1) {
       grid[y * WINDOW_WIDTH + x] = 0;
     }
   }
+
   Vector2 head = {1, 1};
+  Vector2 initialDirection = {1, 0};
+  struct Snake snake = {head, initialDirection, 5};
   float time = 0;
+  bool gameOver = false;
 
   while (!WindowShouldClose()) {
     float dt = GetFrameTime();
     time += dt;
 
-    if (time > 1.0f) {
-      time = 0.0f;
-      updateSnakePosition(grid, &head);
-      updateCellLives(grid, head);
+    checkForDirectionChange(&snake);
+    if (time > TIME_PER_TURN && !gameOver) {
+      time -= TIME_PER_TURN;
+      updateSnakePosition(grid, &snake);
+      if (grid[(int)snake.head.y * WINDOW_WIDTH + (int)snake.head.x] > 0) {
+        gameOver = true;
+        goto draw;
+      }
+      updateCellLives(grid, snake);
     }
     // if (DEBUG_MODE) {
     //   printf("[DEBUG]: Delta - %f\n", dt);
     //   printf("[DEBUG]: Time - %f\n", time);
     // }
+  draw:
     BeginDrawing();
     ClearBackground(GetColor(0x202020FF));
     DrawObjects(grid);
@@ -125,6 +190,9 @@ int main() {
       DrawDebugCellValues(grid);
     }
     DrawGrid2D();
+    if (gameOver) {
+      DrawText("Game Over", WINDOW_WIDTH / 4, WINDOW_HEIGHT / 4, 64, RED);
+    }
     EndDrawing();
   }
 
