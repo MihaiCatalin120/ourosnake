@@ -185,13 +185,20 @@ int main() {
     BeginDrawing();
     ClearBackground(GetColor(0x202020FF));
     DrawObjects(grid);
-    DrawFPS(700, 100);
     if (DEBUG_MODE) {
+      DrawFPS(700, 100);
       DrawDebugCellValues(grid);
     }
     DrawGrid2D();
     if (gameOver) {
-      DrawText("Game Over", WINDOW_WIDTH / 4, WINDOW_HEIGHT / 4, 64, RED);
+      const char text[] = "Game Over";
+      int fontSize = 64;
+      int textWidth = MeasureText(text, fontSize);
+      DrawRectangle(WINDOW_WIDTH / 2 - textWidth / 2 - 20,
+                    WINDOW_HEIGHT / 2 - fontSize / 2 - 20, textWidth + 40,
+                    fontSize + 40, BLACK);
+      DrawText("Game Over", WINDOW_WIDTH / 2 - textWidth / 2,
+               WINDOW_HEIGHT / 2 - fontSize / 2, fontSize, RED);
     }
     EndDrawing();
   }
