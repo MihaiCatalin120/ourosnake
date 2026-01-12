@@ -64,11 +64,13 @@ void UpdateCellLives(int *grid, struct Snake snake) {
 
 void DrawGrid2D() {
   for (size_t x = 0; x < WINDOW_WIDTH / GRID_CELL_SIZE; x += 1) {
-    DrawLine(x * GRID_CELL_SIZE, 0, x * GRID_CELL_SIZE, WINDOW_HEIGHT, WHITE);
+    DrawLine(x * GRID_CELL_SIZE, 0, x * GRID_CELL_SIZE, WINDOW_HEIGHT,
+             GetColor(0xFFFFFF20));
   }
 
   for (size_t y = 0; y < WINDOW_HEIGHT / GRID_CELL_SIZE; y += 1) {
-    DrawLine(0, y * GRID_CELL_SIZE, WINDOW_WIDTH, y * GRID_CELL_SIZE, WHITE);
+    DrawLine(0, y * GRID_CELL_SIZE, WINDOW_WIDTH, y * GRID_CELL_SIZE,
+             GetColor(0xFFFFFF20));
   }
 }
 
@@ -258,6 +260,8 @@ void GenerateGoal(int *grid) {
 // (currently duplicating header files into source code directory just for LSP)
 
 // TODO Sometimes no end goal is spawned - needs investigation
+//
+// TODO segfault after >5 rounds - check
 int main() {
   InitWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "ourosnake");
   InitAudioDevice();
