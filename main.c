@@ -12,6 +12,8 @@
 #define GRID_CELL_SIZE 50
 #define DEBUG_MODE false
 #define TIME_PER_TURN 0.5f
+#define CELL_OBSTACLE -1
+#define CELL_GOAL -2
 
 struct Snake {
   Vector2 head;
@@ -27,8 +29,11 @@ struct ObstacleGenerator {
 // Up, Right, Down, Left
 Vector2 directions[4] = {{0, -1}, {1, 0}, {0, 1}, {-1, 0}};
 
-void updateSnakePosition(int *grid, struct Snake *snake) {
+void UpdateSnakePosition(int *grid, struct Snake *snake) {
+  // Make the step
   snake->head = Vector2Add(snake->head, snake->direction);
+
+  // Wrap head position if outside of grid
   if (snake->head.x >= WINDOW_WIDTH * 1.0f / GRID_CELL_SIZE)
     snake->head.x = 0;
   if (snake->head.x < 0)
@@ -42,7 +47,7 @@ void updateSnakePosition(int *grid, struct Snake *snake) {
     printf("[DEBUG]: Head is now x:%f y:%f\n", snake->head.x, snake->head.y);
 }
 
-void updateCellLives(int *grid, struct Snake snake) {
+void UpdateCellLives(int *grid, struct Snake snake) {
   for (size_t y = 0; y < WINDOW_HEIGHT / GRID_CELL_SIZE; y += 1) {
     for (size_t x = 0; x < WINDOW_WIDTH / GRID_CELL_SIZE; x += 1) {
       const int gridPosTranslated = y * WINDOW_WIDTH + x;
@@ -99,16 +104,23 @@ void DrawObjects(int *grid) {
       }
 
       // Obstacle
-      if (grid[gridPosTranslated] == -1) {
+      if (grid[gridPosTranslated] == CELL_OBSTACLE) {
         DrawRectangle(x * GRID_CELL_SIZE + 1, y * GRID_CELL_SIZE + 1,
                       GRID_CELL_SIZE - 1, GRID_CELL_SIZE - 1,
                       GetColor(0xFFFFFFFF));
+      }
+
+      // Goal
+      if (grid[gridPosTranslated] == CELL_GOAL) {
+        DrawRectangle(x * GRID_CELL_SIZE + 1, y * GRID_CELL_SIZE + 1,
+                      GRID_CELL_SIZE - 1, GRID_CELL_SIZE - 1,
+                      GetColor(0x00FF00FF));
       }
     }
   }
 }
 
-bool isValueInArray(int value, int array[], int length) {
+bool IsValueInArray(int value, int array[], int length) {
   for (size_t i = 0; i < length; i++) {
     if (value == array[i])
       return true;
@@ -117,7 +129,7 @@ bool isValueInArray(int value, int array[], int length) {
   return false;
 }
 
-void checkForDirectionChange(struct Snake *snake) {
+void CheckForDirectionChange(struct Snake *snake) {
   int key = GetKeyPressed();
 
   if (key == KEY_NULL)
@@ -128,24 +140,24 @@ void checkForDirectionChange(struct Snake *snake) {
   int downCases[2] = {KEY_DOWN, KEY_S};
   int leftCases[2] = {KEY_LEFT, KEY_A};
 
-  if (isValueInArray(key, upCases, sizeof(upCases) / sizeof(upCases[0]))) {
+  if (IsValueInArray(key, upCases, sizeof(upCases) / sizeof(upCases[0]))) {
     snake->direction = directions[0];
     return;
   }
 
-  if (isValueInArray(key, rightCases,
+  if (IsValueInArray(key, rightCases,
                      sizeof(rightCases) / sizeof(rightCases[0]))) {
     snake->direction = directions[1];
     return;
   }
 
-  if (isValueInArray(key, downCases,
+  if (IsValueInArray(key, downCases,
                      sizeof(downCases) / sizeof(downCases[0]))) {
     snake->direction = directions[2];
     return;
   }
 
-  if (isValueInArray(key, leftCases,
+  if (IsValueInArray(key, leftCases,
                      sizeof(leftCases) / sizeof(leftCases[0]))) {
     snake->direction = directions[3];
     return;
@@ -158,7 +170,7 @@ void MarkObstacle(int *grid, struct ObstacleGenerator generator) {
   size_t index = 0;
 
   while (Vector2Equals(generator.moves[index], endPosition) == 0) {
-    grid[(int)head.y * WINDOW_WIDTH + (int)head.x] = -1;
+    grid[(int)head.y * WINDOW_WIDTH + (int)head.x] = CELL_OBSTACLE;
     head = Vector2Add(head, generator.moves[index]);
     index++;
   }
@@ -193,6 +205,7 @@ void ClearGrid(int *grid) {
   }
 }
 
+// TODO: Merge these two functions into one
 void DrawGameOverBox() {
   const char gameOverText[] = "Game Over";
   const char restartText[] = "(Press R to restart)";
@@ -211,52 +224,106 @@ void DrawGameOverBox() {
            restartFontSize, WHITE);
 }
 
+void DrawRoundWonBox() {
+  const char gameOverText[] = "Round Won";
+  const char restartText[] = "(Press any key to continue)";
+  int gameOverFontSize = 64;
+  int restartFontSize = 12;
+  int gameOverTextWidth = MeasureText(gameOverText, gameOverFontSize);
+  int restartTextWidth = MeasureText(restartText, restartFontSize);
+  DrawRectangle(WINDOW_WIDTH / 2 - gameOverTextWidth / 2 - 20,
+                WINDOW_HEIGHT / 2 - gameOverFontSize / 2 - 20,
+                gameOverTextWidth + 40,
+                gameOverFontSize + restartFontSize + 40 + 10, BLACK);
+  DrawText(gameOverText, WINDOW_WIDTH / 2 - gameOverTextWidth / 2,
+           WINDOW_HEIGHT / 2 - gameOverFontSize / 2, gameOverFontSize, GREEN);
+  DrawText(restartText, WINDOW_WIDTH / 2 - restartTextWidth / 2,
+           WINDOW_HEIGHT / 2 - restartFontSize / 2 + gameOverFontSize / 2 + 10,
+           restartFontSize, WHITE);
+}
+
+void GenerateGoal(int *grid) {
+  Vector2 pos = {GetRandomValue(0, WINDOW_WIDTH / GRID_CELL_SIZE),
+                 GetRandomValue(0, WINDOW_HEIGHT / GRID_CELL_SIZE)};
+  // Avoid spawning directly on an obstacle or snake
+  while (grid[(int)pos.y * WINDOW_WIDTH + (int)pos.x] != 0) {
+    pos.x = GetRandomValue(0, WINDOW_WIDTH / GRID_CELL_SIZE);
+    pos.y = GetRandomValue(0, WINDOW_HEIGHT / GRID_CELL_SIZE);
+  }
+
+  grid[(int)pos.y * WINDOW_WIDTH + (int)pos.x] = CELL_GOAL;
+}
+
 // TODO: Configure LSP to work on current folder structure without any hacks
 // (currently duplicating header files into source code directory just for LSP)
+
+// TODO Sometimes no end goal is spawned - needs investigation
 int main() {
   InitWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "ourosnake");
   InitAudioDevice();
   SetTargetFPS(60);
   int *grid = (int *)MemAlloc(WINDOW_WIDTH * WINDOW_HEIGHT / GRID_CELL_SIZE *
                               sizeof(int));
-
+init:
   ClearGrid(grid);
 
-  Vector2 head = {1, 1};
-  Vector2 initialDirection = {1, 0};
+  // TODO: find formula to ensure obstacles are not crowding
+  // the grid / grid is not too empty
+  GenerateInitialObstacles(grid, 5);
+  GenerateGoal(grid);
+
+  Vector2 head = {GetRandomValue(0, WINDOW_WIDTH / GRID_CELL_SIZE),
+                  GetRandomValue(0, WINDOW_HEIGHT / GRID_CELL_SIZE)};
+  // Avoid spawning directly on an obstacle
+  while (grid[(int)head.y * WINDOW_WIDTH + (int)head.x] != 0) {
+    head.x = GetRandomValue(0, WINDOW_WIDTH / GRID_CELL_SIZE);
+    head.y = GetRandomValue(0, WINDOW_HEIGHT / GRID_CELL_SIZE);
+  }
+  Vector2 initialDirection = directions[GetRandomValue(0, 3)];
   struct Snake snake = {head, initialDirection, 5};
   float time = 0;
   bool gameOver = false;
-
-  GenerateInitialObstacles(grid, 5);
+  bool roundWon = false;
 
   while (!WindowShouldClose()) {
-    if (!gameOver) {
+    if (!gameOver && !roundWon) {
       float dt = GetFrameTime();
       time += dt;
     }
 
-    checkForDirectionChange(&snake);
+    CheckForDirectionChange(&snake);
 
-    if (IsKeyDown(KEY_R)) {
-      if (gameOver) {
+    // TODO: refactor into separate function
+    if (gameOver) {
+      if (IsKeyDown(KEY_R)) {
         ClearGrid(grid);
-        snake.head.x = 1.0f;
-        snake.head.y = 1.0f;
-        snake.direction = initialDirection;
-        GenerateInitialObstacles(grid, 5);
         gameOver = false;
+        goto init;
+      }
+    }
+
+    if (roundWon) {
+      // TODO: change to all keys
+      if (IsKeyDown(KEY_ENTER)) {
+        ClearGrid(grid);
+        roundWon = false;
+        goto init;
       }
     }
 
     if (time > TIME_PER_TURN && !gameOver) {
       time -= TIME_PER_TURN;
-      updateSnakePosition(grid, &snake);
-      if (grid[(int)snake.head.y * WINDOW_WIDTH + (int)snake.head.x] != 0) {
+      UpdateSnakePosition(grid, &snake);
+      if (grid[(int)snake.head.y * WINDOW_WIDTH + (int)snake.head.x] ==
+          CELL_GOAL) {
+        roundWon = true;
+        goto draw;
+      } else if (grid[(int)snake.head.y * WINDOW_WIDTH + (int)snake.head.x] !=
+                 0) {
         gameOver = true;
         goto draw;
       }
-      updateCellLives(grid, snake);
+      UpdateCellLives(grid, snake);
     }
     // if (DEBUG_MODE) {
     //   printf("[DEBUG]: Delta - %f\n", dt);
@@ -271,6 +338,9 @@ int main() {
       DrawDebugCellValues(grid);
     }
     DrawGrid2D();
+    if (roundWon) {
+      DrawRoundWonBox();
+    }
     if (gameOver) {
       DrawGameOverBox();
     }
