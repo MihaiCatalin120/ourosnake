@@ -24,6 +24,9 @@ struct ObstacleGenerator {
   Vector2 moves[10]; // TODO: support dynamic moves max size
 };
 
+// Up, Right, Down, Left
+Vector2 directions[4] = {{0, -1}, {1, 0}, {0, 1}, {-1, 0}};
+
 void updateSnakePosition(int *grid, struct Snake *snake) {
   snake->head = Vector2Add(snake->head, snake->direction);
   if (snake->head.x >= WINDOW_WIDTH * 1.0f / GRID_CELL_SIZE)
@@ -47,10 +50,6 @@ void updateCellLives(int *grid, struct Snake snake) {
       if ((int)snake.head.x == x && (int)snake.head.y == y) {
         if (grid[gridPosTranslated] == 0)
           grid[gridPosTranslated] = snake.length;
-        else {
-          printf("ouch");
-          WindowShouldClose();
-        }
       } else if (grid[gridPosTranslated] > 0) {
         grid[gridPosTranslated] -= 1;
       }
@@ -124,8 +123,6 @@ void checkForDirectionChange(struct Snake *snake) {
   if (key == KEY_NULL)
     return;
 
-  // Up, Right, Down, Left
-  Vector2 directions[4] = {{0, -1}, {1, 0}, {0, 1}, {-1, 0}};
   int upCases[2] = {KEY_UP, KEY_W};
   int rightCases[2] = {KEY_RIGHT, KEY_D};
   int downCases[2] = {KEY_DOWN, KEY_S};
@@ -168,8 +165,6 @@ void MarkObstacle(int *grid, struct ObstacleGenerator generator) {
 }
 
 void GenerateInitialObstacles(int *grid, int numberOfObstacles) {
-  // Up, Right, Down, Left
-  Vector2 directions[4] = {{0, -1}, {1, 0}, {0, 1}, {-1, 0}};
   Vector2 endDirection = {0, 0};
 
   for (size_t i = 0; i < numberOfObstacles; i++) {
@@ -190,20 +185,42 @@ void GenerateInitialObstacles(int *grid, int numberOfObstacles) {
   }
 }
 
-// TODO: Configure LSP to work on current folder structure without any hacks
-// (currently duplicating header files into source code directory just for LSP)
-int main() {
-  InitWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "ourosnake");
-  SetTargetFPS(60);
-  int *grid = (int *)MemAlloc(WINDOW_WIDTH * WINDOW_HEIGHT / GRID_CELL_SIZE *
-                              sizeof(int));
-
-  // Initialize grid
+void ClearGrid(int *grid) {
   for (size_t y = 0; y < WINDOW_HEIGHT / GRID_CELL_SIZE; y += 1) {
     for (size_t x = 0; x < WINDOW_WIDTH / GRID_CELL_SIZE; x += 1) {
       grid[y * WINDOW_WIDTH + x] = 0;
     }
   }
+}
+
+void DrawGameOverBox() {
+  const char gameOverText[] = "Game Over";
+  const char restartText[] = "(Press R to restart)";
+  int gameOverFontSize = 64;
+  int restartFontSize = 12;
+  int gameOverTextWidth = MeasureText(gameOverText, gameOverFontSize);
+  int restartTextWidth = MeasureText(restartText, restartFontSize);
+  DrawRectangle(WINDOW_WIDTH / 2 - gameOverTextWidth / 2 - 20,
+                WINDOW_HEIGHT / 2 - gameOverFontSize / 2 - 20,
+                gameOverTextWidth + 40,
+                gameOverFontSize + restartFontSize + 40 + 10, BLACK);
+  DrawText(gameOverText, WINDOW_WIDTH / 2 - gameOverTextWidth / 2,
+           WINDOW_HEIGHT / 2 - gameOverFontSize / 2, gameOverFontSize, RED);
+  DrawText(restartText, WINDOW_WIDTH / 2 - restartTextWidth / 2,
+           WINDOW_HEIGHT / 2 - restartFontSize / 2 + gameOverFontSize / 2 + 10,
+           restartFontSize, WHITE);
+}
+
+// TODO: Configure LSP to work on current folder structure without any hacks
+// (currently duplicating header files into source code directory just for LSP)
+int main() {
+  InitWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "ourosnake");
+  InitAudioDevice();
+  SetTargetFPS(60);
+  int *grid = (int *)MemAlloc(WINDOW_WIDTH * WINDOW_HEIGHT / GRID_CELL_SIZE *
+                              sizeof(int));
+
+  ClearGrid(grid);
 
   Vector2 head = {1, 1};
   Vector2 initialDirection = {1, 0};
@@ -214,10 +231,24 @@ int main() {
   GenerateInitialObstacles(grid, 5);
 
   while (!WindowShouldClose()) {
-    float dt = GetFrameTime();
-    time += dt;
+    if (!gameOver) {
+      float dt = GetFrameTime();
+      time += dt;
+    }
 
     checkForDirectionChange(&snake);
+
+    if (IsKeyDown(KEY_R)) {
+      if (gameOver) {
+        ClearGrid(grid);
+        snake.head.x = 1.0f;
+        snake.head.y = 1.0f;
+        snake.direction = initialDirection;
+        GenerateInitialObstacles(grid, 5);
+        gameOver = false;
+      }
+    }
+
     if (time > TIME_PER_TURN && !gameOver) {
       time -= TIME_PER_TURN;
       updateSnakePosition(grid, &snake);
@@ -241,18 +272,12 @@ int main() {
     }
     DrawGrid2D();
     if (gameOver) {
-      const char text[] = "Game Over";
-      int fontSize = 64;
-      int textWidth = MeasureText(text, fontSize);
-      DrawRectangle(WINDOW_WIDTH / 2 - textWidth / 2 - 20,
-                    WINDOW_HEIGHT / 2 - fontSize / 2 - 20, textWidth + 40,
-                    fontSize + 40, BLACK);
-      DrawText("Game Over", WINDOW_WIDTH / 2 - textWidth / 2,
-               WINDOW_HEIGHT / 2 - fontSize / 2, fontSize, RED);
+      DrawGameOverBox();
     }
     EndDrawing();
   }
 
+  CloseAudioDevice();
   CloseWindow();
   MemFree(grid);
   return 0;
