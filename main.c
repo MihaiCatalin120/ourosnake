@@ -4,11 +4,12 @@
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 
 #define WINDOW_WIDTH 800
 #define WINDOW_HEIGHT 600
-#define GRID_CELL_SIZE 100
+#define GRID_CELL_SIZE 50
 #define DEBUG_MODE false
 #define TIME_PER_TURN 0.5f
 
@@ -16,6 +17,11 @@ struct Snake {
   Vector2 head;
   Vector2 direction;
   int length;
+};
+
+struct ObstacleGenerator {
+  Vector2 startPosition;
+  Vector2 moves[10]; // TODO: support dynamic moves max size
 };
 
 void updateSnakePosition(int *grid, struct Snake *snake) {
@@ -69,11 +75,12 @@ void DrawDebugCellValues(int *grid) {
 
       if (DEBUG_MODE) {
         // Debug text to show grid values, comment if not used
-        char text[2];
+        char text[4];
+        int fontSize = Clamp(GRID_CELL_SIZE, 10, 64);
         sprintf(text, "%d", grid[gridPosTranslated]);
         DrawText(text, x * GRID_CELL_SIZE + GRID_CELL_SIZE / 4,
-                 y * GRID_CELL_SIZE + GRID_CELL_SIZE / 4,
-                 Clamp(GRID_CELL_SIZE, 10, 64), GetColor(0x000000FF));
+                 y * GRID_CELL_SIZE + GRID_CELL_SIZE / 2 - fontSize / 2,
+                 fontSize, GetColor(0x000000FF));
         // End debug
       }
     }
@@ -85,10 +92,18 @@ void DrawObjects(int *grid) {
     for (size_t x = 0; x < WINDOW_WIDTH / GRID_CELL_SIZE; x += 1) {
       const int gridPosTranslated = y * WINDOW_WIDTH + x;
 
+      // Snake
       if (grid[gridPosTranslated] > 0) {
         DrawRectangle(x * GRID_CELL_SIZE + 1, y * GRID_CELL_SIZE + 1,
                       GRID_CELL_SIZE - 1, GRID_CELL_SIZE - 1,
                       GetColor(0x00FFFFFF));
+      }
+
+      // Obstacle
+      if (grid[gridPosTranslated] == -1) {
+        DrawRectangle(x * GRID_CELL_SIZE + 1, y * GRID_CELL_SIZE + 1,
+                      GRID_CELL_SIZE - 1, GRID_CELL_SIZE - 1,
+                      GetColor(0xFFFFFFFF));
       }
     }
   }
@@ -140,10 +155,45 @@ void checkForDirectionChange(struct Snake *snake) {
   }
 }
 
+void MarkObstacle(int *grid, struct ObstacleGenerator generator) {
+  Vector2 head = generator.startPosition;
+  Vector2 endPosition = {0, 0};
+  size_t index = 0;
+
+  while (Vector2Equals(generator.moves[index], endPosition) == 0) {
+    grid[(int)head.y * WINDOW_WIDTH + (int)head.x] = -1;
+    head = Vector2Add(head, generator.moves[index]);
+    index++;
+  }
+}
+
+void GenerateInitialObstacles(int *grid, int numberOfObstacles) {
+  // Up, Right, Down, Left
+  Vector2 directions[4] = {{0, -1}, {1, 0}, {0, 1}, {-1, 0}};
+  Vector2 endDirection = {0, 0};
+
+  for (size_t i = 0; i < numberOfObstacles; i++) {
+    struct ObstacleGenerator generator;
+
+    generator.startPosition.x =
+        (int)GetRandomValue(0, WINDOW_WIDTH / GRID_CELL_SIZE);
+    generator.startPosition.y =
+        (int)GetRandomValue(0, WINDOW_HEIGHT / GRID_CELL_SIZE);
+
+    size_t moveNumber;
+    for (moveNumber = 0; moveNumber < GetRandomValue(3, 6); moveNumber++) {
+      generator.moves[moveNumber] = directions[GetRandomValue(0, 3)];
+    }
+    generator.moves[moveNumber] = endDirection;
+
+    MarkObstacle(grid, generator);
+  }
+}
+
 // TODO: Configure LSP to work on current folder structure without any hacks
 // (currently duplicating header files into source code directory just for LSP)
 int main() {
-  InitWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "Hello");
+  InitWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "ourosnake");
   SetTargetFPS(60);
   int *grid = (int *)MemAlloc(WINDOW_WIDTH * WINDOW_HEIGHT / GRID_CELL_SIZE *
                               sizeof(int));
@@ -161,6 +211,8 @@ int main() {
   float time = 0;
   bool gameOver = false;
 
+  GenerateInitialObstacles(grid, 5);
+
   while (!WindowShouldClose()) {
     float dt = GetFrameTime();
     time += dt;
@@ -169,7 +221,7 @@ int main() {
     if (time > TIME_PER_TURN && !gameOver) {
       time -= TIME_PER_TURN;
       updateSnakePosition(grid, &snake);
-      if (grid[(int)snake.head.y * WINDOW_WIDTH + (int)snake.head.x] > 0) {
+      if (grid[(int)snake.head.y * WINDOW_WIDTH + (int)snake.head.x] != 0) {
         gameOver = true;
         goto draw;
       }
