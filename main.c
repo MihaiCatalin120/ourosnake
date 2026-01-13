@@ -207,41 +207,19 @@ void ClearGrid(int *grid) {
   }
 }
 
-// TODO: Merge these two functions into one
-void DrawGameOverBox() {
-  const char gameOverText[] = "Game Over";
-  const char restartText[] = "(Press R to restart)";
-  int gameOverFontSize = 64;
-  int restartFontSize = 12;
-  int gameOverTextWidth = MeasureText(gameOverText, gameOverFontSize);
-  int restartTextWidth = MeasureText(restartText, restartFontSize);
-  DrawRectangle(WINDOW_WIDTH / 2 - gameOverTextWidth / 2 - 20,
-                WINDOW_HEIGHT / 2 - gameOverFontSize / 2 - 20,
-                gameOverTextWidth + 40,
-                gameOverFontSize + restartFontSize + 40 + 10, BLACK);
-  DrawText(gameOverText, WINDOW_WIDTH / 2 - gameOverTextWidth / 2,
-           WINDOW_HEIGHT / 2 - gameOverFontSize / 2, gameOverFontSize, RED);
-  DrawText(restartText, WINDOW_WIDTH / 2 - restartTextWidth / 2,
-           WINDOW_HEIGHT / 2 - restartFontSize / 2 + gameOverFontSize / 2 + 10,
-           restartFontSize, WHITE);
-}
-
-void DrawRoundWonBox() {
-  const char gameOverText[] = "Round Won";
-  const char restartText[] = "(Press any key to continue)";
-  int gameOverFontSize = 64;
-  int restartFontSize = 12;
-  int gameOverTextWidth = MeasureText(gameOverText, gameOverFontSize);
-  int restartTextWidth = MeasureText(restartText, restartFontSize);
-  DrawRectangle(WINDOW_WIDTH / 2 - gameOverTextWidth / 2 - 20,
-                WINDOW_HEIGHT / 2 - gameOverFontSize / 2 - 20,
-                gameOverTextWidth + 40,
-                gameOverFontSize + restartFontSize + 40 + 10, BLACK);
-  DrawText(gameOverText, WINDOW_WIDTH / 2 - gameOverTextWidth / 2,
-           WINDOW_HEIGHT / 2 - gameOverFontSize / 2, gameOverFontSize, GREEN);
-  DrawText(restartText, WINDOW_WIDTH / 2 - restartTextWidth / 2,
-           WINDOW_HEIGHT / 2 - restartFontSize / 2 + gameOverFontSize / 2 + 10,
-           restartFontSize, WHITE);
+void DrawEndRoundBox(const char mainText[], const char secondaryText[],
+                     int mainFontSize, int secondaryFontSize,
+                     Color mainTextColor) {
+  int mainTextWidth = MeasureText(mainText, mainFontSize);
+  int secondaryTextWidth = MeasureText(secondaryText, secondaryTextWidth);
+  DrawRectangle(WINDOW_WIDTH / 2 - mainTextWidth / 2 - 20,
+                WINDOW_HEIGHT / 2 - mainFontSize / 2 - 20, mainTextWidth + 40,
+                mainFontSize + secondaryFontSize + 40 + 10, BLACK);
+  DrawText(mainText, WINDOW_WIDTH / 2 - mainTextWidth / 2,
+           WINDOW_HEIGHT / 2 - mainFontSize / 2, mainFontSize, mainTextColor);
+  DrawText(secondaryText, WINDOW_WIDTH / 2 - secondaryTextWidth / 2,
+           WINDOW_HEIGHT / 2 - secondaryFontSize / 2 + mainFontSize / 2 + 10,
+           secondaryFontSize, WHITE);
 }
 
 void GenerateGoal(int *grid) {
@@ -343,10 +321,10 @@ init:
     }
     DrawGrid2D();
     if (roundWon) {
-      DrawRoundWonBox();
+      DrawEndRoundBox("Round Won", "Press any key to continue", 64, 12, GREEN);
     }
     if (gameOver) {
-      DrawGameOverBox();
+      DrawEndRoundBox("Game Over", "Press R to restart", 64, 12, RED);
     }
     EndDrawing();
   }
