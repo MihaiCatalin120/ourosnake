@@ -172,7 +172,9 @@ void MarkObstacle(int *grid, struct ObstacleGenerator generator) {
   size_t index = 0;
 
   while (Vector2Equals(generator.moves[index], endPosition) == 0) {
-    grid[(int)head.y * WINDOW_WIDTH + (int)head.x] = CELL_OBSTACLE;
+    if (grid[(int)head.y * WINDOW_WIDTH + (int)head.x] != CELL_GOAL) {
+      grid[(int)head.y * WINDOW_WIDTH + (int)head.x] = CELL_OBSTACLE;
+    }
     head = Vector2Add(head, generator.moves[index]);
     index++;
   }
@@ -222,23 +224,21 @@ void DrawEndRoundBox(const char mainText[], const char secondaryText[],
            secondaryFontSize, WHITE);
 }
 
+// TODO: Use vector distance to ensure goal is not too near of the starting
+// position
 void GenerateGoal(int *grid) {
-  Vector2 pos = {GetRandomValue(0, WINDOW_WIDTH / GRID_CELL_SIZE),
-                 GetRandomValue(0, WINDOW_HEIGHT / GRID_CELL_SIZE)};
+  Vector2 pos = {GetRandomValue(0, WINDOW_WIDTH / GRID_CELL_SIZE - 1),
+                 GetRandomValue(0, WINDOW_HEIGHT / GRID_CELL_SIZE - 1)};
   // Avoid spawning directly on an obstacle or snake
   while (grid[(int)pos.y * WINDOW_WIDTH + (int)pos.x] != 0) {
-    pos.x = GetRandomValue(0, WINDOW_WIDTH / GRID_CELL_SIZE);
-    pos.y = GetRandomValue(0, WINDOW_HEIGHT / GRID_CELL_SIZE);
+    pos.x = GetRandomValue(0, WINDOW_WIDTH / GRID_CELL_SIZE - 1);
+    pos.y = GetRandomValue(0, WINDOW_HEIGHT / GRID_CELL_SIZE - 1);
   }
 
+  printf("Spawning goal at [%d][%d]\n", (int)pos.x, (int)pos.y);
   grid[(int)pos.y * WINDOW_WIDTH + (int)pos.x] = CELL_GOAL;
 }
 
-// TODO: Configure LSP to work on current folder structure without any hacks
-// (currently duplicating header files into source code directory just for LSP)
-
-// TODO Sometimes no end goal is spawned - needs investigation
-//
 // TODO segfault after >5 rounds - check
 int main() {
   InitWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "ourosnake");
@@ -254,13 +254,15 @@ init:
   GenerateInitialObstacles(grid, 5);
   GenerateGoal(grid);
 
-  Vector2 head = {GetRandomValue(0, WINDOW_WIDTH / GRID_CELL_SIZE),
-                  GetRandomValue(0, WINDOW_HEIGHT / GRID_CELL_SIZE)};
+  Vector2 head = {GetRandomValue(0, WINDOW_WIDTH / GRID_CELL_SIZE - 1),
+                  GetRandomValue(0, WINDOW_HEIGHT / GRID_CELL_SIZE - 1)};
   // Avoid spawning directly on an obstacle
   while (grid[(int)head.y * WINDOW_WIDTH + (int)head.x] != 0) {
-    head.x = GetRandomValue(0, WINDOW_WIDTH / GRID_CELL_SIZE);
-    head.y = GetRandomValue(0, WINDOW_HEIGHT / GRID_CELL_SIZE);
+    head.x = GetRandomValue(0, WINDOW_WIDTH / GRID_CELL_SIZE - 1);
+    head.y = GetRandomValue(0, WINDOW_HEIGHT / GRID_CELL_SIZE - 1);
   }
+
+  printf("Setting snake head at [%d][%d]\n", (int)head.x, (int)head.y);
   Vector2 initialDirection = directions[GetRandomValue(0, 3)];
   struct Snake snake = {head, initialDirection, 5};
   float time = 0;
@@ -275,20 +277,16 @@ init:
 
     CheckForDirectionChange(&snake);
 
-    // TODO: refactor into separate function
     if (gameOver) {
       if (IsKeyDown(KEY_R)) {
         ClearGrid(grid);
-        gameOver = false;
         goto init;
       }
     }
 
     if (roundWon) {
-      // TODO: change to all keys
-      if (IsKeyDown(KEY_ENTER)) {
+      if (GetCharPressed() != 0) {
         ClearGrid(grid);
-        roundWon = false;
         goto init;
       }
     }
