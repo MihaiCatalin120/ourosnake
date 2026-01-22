@@ -7,15 +7,20 @@
 #include <string.h>
 #include <unistd.h>
 
-#define WINDOW_WIDTH 800
-#define WINDOW_HEIGHT 600
+// WARN: If NO_COLUMNS or NO_ROWS have floating points the game will not work
+// properly
+#define WINDOW_WIDTH 840
+#define WINDOW_HEIGHT 680
 #define GRID_CELL_SIZE 50
 #define DEBUG_MODE false
-#define TIME_PER_TURN 0.5f
+#define TIME_PER_TURN .25f
 #define CELL_OBSTACLE -1
 #define CELL_GOAL -2
-#define NO_COLUMNS WINDOW_WIDTH / GRID_CELL_SIZE
-#define NO_ROWS WINDOW_HEIGHT / GRID_CELL_SIZE
+#define MAIN_PADDING 20
+#define TOP_PADDING 60
+#define NO_COLUMNS ((WINDOW_WIDTH - 2 * MAIN_PADDING) / GRID_CELL_SIZE)
+#define NO_ROWS ((WINDOW_HEIGHT - TOP_PADDING - MAIN_PADDING) / GRID_CELL_SIZE)
+#define GAME_TITLE "ourosnake"
 
 struct Snake {
   Vector2 head;
@@ -36,14 +41,14 @@ void UpdateSnakePosition(int *grid, struct Snake *snake) {
   snake->head = Vector2Add(snake->head, snake->direction);
 
   // Wrap head position if outside of grid
-  if (snake->head.x >= WINDOW_WIDTH * 1.0f / GRID_CELL_SIZE)
+  if (snake->head.x >= (int)NO_COLUMNS)
     snake->head.x = 0;
   if (snake->head.x < 0)
-    snake->head.x = WINDOW_WIDTH * 1.0f / GRID_CELL_SIZE - 1;
-  if (snake->head.y >= WINDOW_HEIGHT * 1.0f / GRID_CELL_SIZE)
+    snake->head.x = (int)NO_COLUMNS - 1;
+  if (snake->head.y >= (int)NO_ROWS)
     snake->head.y = 0;
   if (snake->head.y < 0)
-    snake->head.y = WINDOW_HEIGHT * 1.0f / GRID_CELL_SIZE - 1;
+    snake->head.y = (int)NO_ROWS - 1;
 
   if (DEBUG_MODE)
     printf("[DEBUG]: Head is now x:%f y:%f\n", snake->head.x, snake->head.y);
@@ -65,15 +70,30 @@ void UpdateCellLives(int *grid, struct Snake snake) {
 }
 
 void DrawGrid2D() {
-  for (size_t x = 0; x < NO_COLUMNS; x += 1) {
-    DrawLine(x * GRID_CELL_SIZE, 0, x * GRID_CELL_SIZE, WINDOW_HEIGHT,
+  for (size_t x = 0; x <= NO_COLUMNS; x += 1) {
+    DrawLine(x * GRID_CELL_SIZE + MAIN_PADDING, TOP_PADDING,
+             x * GRID_CELL_SIZE + MAIN_PADDING, WINDOW_HEIGHT - MAIN_PADDING,
              GetColor(0xFFFFFF20));
   }
 
-  for (size_t y = 0; y < NO_ROWS; y += 1) {
-    DrawLine(0, y * GRID_CELL_SIZE, WINDOW_WIDTH, y * GRID_CELL_SIZE,
+  for (size_t y = 0; y <= NO_ROWS; y += 1) {
+    DrawLine(MAIN_PADDING, y * GRID_CELL_SIZE + TOP_PADDING,
+             WINDOW_WIDTH - MAIN_PADDING, y * GRID_CELL_SIZE + TOP_PADDING,
              GetColor(0xFFFFFF20));
   }
+}
+
+void DrawGameHeader(int *round) {
+  char roundText[256];
+  sprintf(roundText, "Round %d", *round);
+  DrawText(roundText, 10, 10, 24, WHITE);
+
+  const char *title = GAME_TITLE;
+  int titleFontSize = 48;
+  int titleWidth = MeasureText(title, titleFontSize);
+  DrawText(title, WINDOW_WIDTH / 2 - titleWidth / 2, 10, titleFontSize, GREEN);
+
+  DrawFPS(WINDOW_WIDTH - 100, 10);
 }
 
 void DrawDebugCellValues(int *grid) {
@@ -86,8 +106,9 @@ void DrawDebugCellValues(int *grid) {
         char text[4];
         int fontSize = Clamp(GRID_CELL_SIZE, 10, 64);
         sprintf(text, "%d", grid[gridPosTranslated]);
-        DrawText(text, x * GRID_CELL_SIZE + GRID_CELL_SIZE / 4,
-                 y * GRID_CELL_SIZE + GRID_CELL_SIZE / 2 - fontSize / 2,
+        DrawText(text, x * GRID_CELL_SIZE + MAIN_PADDING + GRID_CELL_SIZE / 4,
+                 y * GRID_CELL_SIZE + TOP_PADDING + GRID_CELL_SIZE / 2 -
+                     fontSize / 2,
                  fontSize, GetColor(0x000000FF));
         // End debug
       }
@@ -102,23 +123,23 @@ void DrawObjects(int *grid) {
 
       // Snake
       if (grid[gridPosTranslated] > 0) {
-        DrawRectangle(x * GRID_CELL_SIZE + 1, y * GRID_CELL_SIZE + 1,
-                      GRID_CELL_SIZE - 1, GRID_CELL_SIZE - 1,
-                      GetColor(0x00FFFFFF));
+        DrawRectangle(x * GRID_CELL_SIZE + MAIN_PADDING + 1,
+                      y * GRID_CELL_SIZE + TOP_PADDING + 1, GRID_CELL_SIZE - 1,
+                      GRID_CELL_SIZE - 1, GetColor(0x00FFFFFF));
       }
 
       // Obstacle
       if (grid[gridPosTranslated] == CELL_OBSTACLE) {
-        DrawRectangle(x * GRID_CELL_SIZE + 1, y * GRID_CELL_SIZE + 1,
-                      GRID_CELL_SIZE - 1, GRID_CELL_SIZE - 1,
-                      GetColor(0xFFFFFFFF));
+        DrawRectangle(x * GRID_CELL_SIZE + MAIN_PADDING + 1,
+                      y * GRID_CELL_SIZE + TOP_PADDING + 1, GRID_CELL_SIZE - 1,
+                      GRID_CELL_SIZE - 1, GetColor(0xFFFFFFFF));
       }
 
       // Goal
       if (grid[gridPosTranslated] == CELL_GOAL) {
-        DrawRectangle(x * GRID_CELL_SIZE + 1, y * GRID_CELL_SIZE + 1,
-                      GRID_CELL_SIZE - 1, GRID_CELL_SIZE - 1,
-                      GetColor(0x00FF00FF));
+        DrawRectangle(x * GRID_CELL_SIZE + MAIN_PADDING + 1,
+                      y * GRID_CELL_SIZE + TOP_PADDING + 1, GRID_CELL_SIZE - 1,
+                      GRID_CELL_SIZE - 1, GetColor(0x00FF00FF));
       }
     }
   }
@@ -249,11 +270,10 @@ void GenerateGoal(int *grid) {
 int main() {
   InitWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "ourosnake");
   InitAudioDevice();
-  SetTargetFPS(60);
+  // SetTargetFPS(60);
   // printf("Main init \n");
-  int gridWidth = NO_COLUMNS;
-  int gridHeight = NO_ROWS;
-  int *grid = (int *)MemAlloc(gridWidth * gridHeight * sizeof(int));
+  int *grid = (int *)MemAlloc(NO_COLUMNS * NO_ROWS * sizeof(int));
+  int currentRound = 1;
   Vector2 head, initialDirection;
   struct Snake snake;
   float time;
@@ -316,6 +336,7 @@ int main() {
       if (IsKeyDown(KEY_R)) {
         // printf("Game over, r pressed\n");
         ClearGrid(grid);
+        currentRound = 1;
         gameOver = false;
         restart = true;
       }
@@ -325,6 +346,7 @@ int main() {
       if (IsKeyDown(KEY_ENTER)) {
         // printf("Round won, enter pressed\n");
         ClearGrid(grid);
+        currentRound++;
         roundWon = false;
         restart = true;
       }
@@ -364,11 +386,11 @@ int main() {
       // printf("Drawing objects\n");
       DrawObjects(grid);
       if (DEBUG_MODE) {
-        DrawFPS(700, 100);
         DrawDebugCellValues(grid);
       }
       // printf("Drawing grid\n");
       DrawGrid2D();
+      DrawGameHeader(&currentRound);
       if (roundWon) {
         // printf("Drawing round won box\n");
         DrawEndRoundBox("Round Won", "Press enter to continue", 64, 12, GREEN);
