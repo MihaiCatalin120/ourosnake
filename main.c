@@ -14,6 +14,8 @@
 #define TIME_PER_TURN 0.5f
 #define CELL_OBSTACLE -1
 #define CELL_GOAL -2
+#define NO_COLUMNS WINDOW_WIDTH / GRID_CELL_SIZE
+#define NO_ROWS WINDOW_HEIGHT / GRID_CELL_SIZE
 
 struct Snake {
   Vector2 head;
@@ -48,9 +50,9 @@ void UpdateSnakePosition(int *grid, struct Snake *snake) {
 }
 
 void UpdateCellLives(int *grid, struct Snake snake) {
-  for (size_t y = 0; y < WINDOW_HEIGHT / GRID_CELL_SIZE; y += 1) {
-    for (size_t x = 0; x < WINDOW_WIDTH / GRID_CELL_SIZE; x += 1) {
-      const int gridPosTranslated = y * WINDOW_WIDTH / GRID_CELL_SIZE + x;
+  for (size_t y = 0; y < NO_ROWS; y += 1) {
+    for (size_t x = 0; x < NO_COLUMNS; x += 1) {
+      const int gridPosTranslated = y * NO_COLUMNS + x;
 
       if ((int)snake.head.x == x && (int)snake.head.y == y) {
         if (grid[gridPosTranslated] == 0)
@@ -63,21 +65,21 @@ void UpdateCellLives(int *grid, struct Snake snake) {
 }
 
 void DrawGrid2D() {
-  for (size_t x = 0; x < WINDOW_WIDTH / GRID_CELL_SIZE; x += 1) {
+  for (size_t x = 0; x < NO_COLUMNS; x += 1) {
     DrawLine(x * GRID_CELL_SIZE, 0, x * GRID_CELL_SIZE, WINDOW_HEIGHT,
              GetColor(0xFFFFFF20));
   }
 
-  for (size_t y = 0; y < WINDOW_HEIGHT / GRID_CELL_SIZE; y += 1) {
+  for (size_t y = 0; y < NO_ROWS; y += 1) {
     DrawLine(0, y * GRID_CELL_SIZE, WINDOW_WIDTH, y * GRID_CELL_SIZE,
              GetColor(0xFFFFFF20));
   }
 }
 
 void DrawDebugCellValues(int *grid) {
-  for (size_t y = 0; y < WINDOW_HEIGHT / GRID_CELL_SIZE; y += 1) {
-    for (size_t x = 0; x < WINDOW_WIDTH / GRID_CELL_SIZE; x += 1) {
-      const int gridPosTranslated = y * WINDOW_WIDTH / GRID_CELL_SIZE + x;
+  for (size_t y = 0; y < NO_ROWS; y += 1) {
+    for (size_t x = 0; x < NO_COLUMNS; x += 1) {
+      const int gridPosTranslated = y * NO_COLUMNS + x;
 
       if (DEBUG_MODE) {
         // Debug text to show grid values, comment if not used
@@ -94,9 +96,9 @@ void DrawDebugCellValues(int *grid) {
 }
 
 void DrawObjects(int *grid) {
-  for (size_t y = 0; y < WINDOW_HEIGHT / GRID_CELL_SIZE; y += 1) {
-    for (size_t x = 0; x < WINDOW_WIDTH / GRID_CELL_SIZE; x += 1) {
-      const int gridPosTranslated = y * WINDOW_WIDTH / GRID_CELL_SIZE + x;
+  for (size_t y = 0; y < NO_ROWS; y += 1) {
+    for (size_t x = 0; x < NO_COLUMNS; x += 1) {
+      const int gridPosTranslated = y * NO_COLUMNS + x;
 
       // Snake
       if (grid[gridPosTranslated] > 0) {
@@ -176,14 +178,12 @@ void MarkObstacle(int *grid, struct ObstacleGenerator generator) {
   size_t index = 0;
 
   while (Vector2Equals(generator.moves[index], endPosition) == 0) {
-    if (grid[(int)head.y * WINDOW_WIDTH / GRID_CELL_SIZE + (int)head.x] !=
-        CELL_GOAL) {
-      grid[(int)head.y * WINDOW_WIDTH / GRID_CELL_SIZE + (int)head.x] =
-          CELL_OBSTACLE;
+    if (grid[(int)head.y * NO_COLUMNS + (int)head.x] != CELL_GOAL) {
+      grid[(int)head.y * NO_COLUMNS + (int)head.x] = CELL_OBSTACLE;
     }
     head = Vector2Add(head, generator.moves[index]);
-    if ((int)head.x < 0 || (int)head.x >= WINDOW_WIDTH / GRID_CELL_SIZE ||
-        (int)head.y < 0 || (int)head.y >= WINDOW_HEIGHT / GRID_CELL_SIZE)
+    if ((int)head.x < 0 || (int)head.x >= NO_COLUMNS || (int)head.y < 0 ||
+        (int)head.y >= NO_ROWS)
       break;
     index++;
   }
@@ -195,10 +195,8 @@ void GenerateInitialObstacles(int *grid, int numberOfObstacles) {
   for (size_t i = 0; i < numberOfObstacles; i++) {
     struct ObstacleGenerator generator;
 
-    generator.startPosition.x =
-        (int)GetRandomValue(0, WINDOW_WIDTH / GRID_CELL_SIZE - 1);
-    generator.startPosition.y =
-        (int)GetRandomValue(0, WINDOW_HEIGHT / GRID_CELL_SIZE - 1);
+    generator.startPosition.x = (int)GetRandomValue(0, NO_COLUMNS - 1);
+    generator.startPosition.y = (int)GetRandomValue(0, NO_ROWS - 1);
 
     size_t moveNumber;
     for (moveNumber = 0; moveNumber < GetRandomValue(3, 6); moveNumber++) {
@@ -211,9 +209,9 @@ void GenerateInitialObstacles(int *grid, int numberOfObstacles) {
 }
 
 void ClearGrid(int *grid) {
-  for (size_t y = 0; y < WINDOW_HEIGHT / GRID_CELL_SIZE; y += 1) {
-    for (size_t x = 0; x < WINDOW_WIDTH / GRID_CELL_SIZE; x += 1) {
-      grid[y * WINDOW_WIDTH / GRID_CELL_SIZE + x] = 0;
+  for (size_t y = 0; y < NO_ROWS; y += 1) {
+    for (size_t x = 0; x < NO_COLUMNS; x += 1) {
+      grid[y * NO_COLUMNS + x] = 0;
     }
   }
 }
@@ -236,16 +234,16 @@ void DrawEndRoundBox(const char mainText[], const char secondaryText[],
 // TODO: Use vector distance to ensure goal is not too near of the starting
 // position
 void GenerateGoal(int *grid) {
-  Vector2 pos = {GetRandomValue(0, WINDOW_WIDTH / GRID_CELL_SIZE - 1),
-                 GetRandomValue(0, WINDOW_HEIGHT / GRID_CELL_SIZE - 1)};
+  Vector2 pos = {GetRandomValue(0, NO_COLUMNS - 1),
+                 GetRandomValue(0, NO_ROWS - 1)};
   // Avoid spawning directly on an obstacle or snake
-  while (grid[(int)pos.y * WINDOW_WIDTH / GRID_CELL_SIZE + (int)pos.x] != 0) {
-    pos.x = GetRandomValue(0, WINDOW_WIDTH / GRID_CELL_SIZE - 1);
-    pos.y = GetRandomValue(0, WINDOW_HEIGHT / GRID_CELL_SIZE - 1);
+  while (grid[(int)pos.y * NO_COLUMNS + (int)pos.x] != 0) {
+    pos.x = GetRandomValue(0, NO_COLUMNS - 1);
+    pos.y = GetRandomValue(0, NO_ROWS - 1);
   }
 
   // printf("Spawning goal at [%d][%d]\n", (int)pos.x, (int)pos.y);
-  grid[(int)pos.y * WINDOW_WIDTH / GRID_CELL_SIZE + (int)pos.x] = CELL_GOAL;
+  grid[(int)pos.y * NO_COLUMNS + (int)pos.x] = CELL_GOAL;
 }
 
 int main() {
@@ -253,8 +251,8 @@ int main() {
   InitAudioDevice();
   SetTargetFPS(60);
   // printf("Main init \n");
-  int gridWidth = WINDOW_WIDTH / GRID_CELL_SIZE;
-  int gridHeight = WINDOW_HEIGHT / GRID_CELL_SIZE;
+  int gridWidth = NO_COLUMNS;
+  int gridHeight = NO_ROWS;
   int *grid = (int *)MemAlloc(gridWidth * gridHeight * sizeof(int));
   Vector2 head, initialDirection;
   struct Snake snake;
@@ -265,7 +263,8 @@ int main() {
   Sound loseWav = LoadSound("assets/audio/lose.wav");
 
   restart = true;
-  // printf("Entering main game loop\n");
+  printf("Number of rows [%d] columns [%d]\n", NO_ROWS, NO_COLUMNS);
+  printf("Entering main game loop\n");
   while (!WindowShouldClose()) {
     if (restart) {
       // printf("Classic init \n");
@@ -280,15 +279,14 @@ int main() {
       GenerateGoal(grid);
 
       // printf("Generating snake head\n");
-      head.x = GetRandomValue(0, WINDOW_WIDTH / GRID_CELL_SIZE - 1);
-      head.y = GetRandomValue(0, WINDOW_HEIGHT / GRID_CELL_SIZE - 1);
+      head.x = GetRandomValue(0, NO_COLUMNS - 1);
+      head.y = GetRandomValue(0, NO_ROWS - 1);
       // Avoid spawning directly on an obstacle
       // TODO: find a way to ensure obstacles are at least 2 spaces away from
       // the snake head spawn point
-      while (grid[(int)head.y * WINDOW_WIDTH / GRID_CELL_SIZE + (int)head.x] !=
-             0) {
-        head.x = GetRandomValue(0, WINDOW_WIDTH / GRID_CELL_SIZE - 1);
-        head.y = GetRandomValue(0, WINDOW_HEIGHT / GRID_CELL_SIZE - 1);
+      while (grid[(int)head.y * NO_COLUMNS + (int)head.x] != 0) {
+        head.x = GetRandomValue(0, NO_COLUMNS - 1);
+        head.y = GetRandomValue(0, NO_ROWS - 1);
       }
 
       // printf("Setting snake head at [%d][%d] = %d\n", (int)head.x,
@@ -338,13 +336,13 @@ int main() {
       // printf("Update snake position\n");
       UpdateSnakePosition(grid, &snake);
       // printf("Check for final round states\n");
-      if (grid[(int)snake.head.y * WINDOW_WIDTH / GRID_CELL_SIZE +
-               (int)snake.head.x] == CELL_GOAL) {
+      if (grid[(int)snake.head.y * NO_COLUMNS + (int)snake.head.x] ==
+          CELL_GOAL) {
         roundWon = true;
         PlaySound(winWav);
         goto draw;
-      } else if (grid[(int)snake.head.y * WINDOW_WIDTH / GRID_CELL_SIZE +
-                      (int)snake.head.x] != 0) {
+      } else if (grid[(int)snake.head.y * NO_COLUMNS + (int)snake.head.x] !=
+                 0) {
         gameOver = true;
         PlaySound(loseWav);
         goto draw;
