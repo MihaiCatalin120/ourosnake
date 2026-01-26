@@ -13,3 +13,17 @@ Copy main.c into raylib/src<br>
 
 Then go into raylib/src and run project with: <br>
 `gcc -framework CoreVideo -framework IOKit -framework Cocoa -framework GLUT -framework OpenGL libraylib.a main.c -o main && ./main`
+
+Windows build:
+Install mingw-gcc compiler
+
+Download raylib release from github: https://github.com/raysan5/raylib/releases/download/5.5/raylib-5.5_win64_mingw-w64.zip
+
+Extract and rename folder as raylib_win
+
+Build the executable with:
+x86_64-w64-mingw32-gcc main.c -o ourosnake.exe -I ./raylib_win/include -L ./raylib_win/lib -lraylib -lgdi32 -lwinmm -mwindows
+
+Then run the game by opening ourosnake.exe
+
+Enjoy :D
