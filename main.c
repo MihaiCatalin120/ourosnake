@@ -1,5 +1,6 @@
 #include "raylib.h"
 #include "raymath.h"
+#include <assert.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdio.h>
@@ -11,8 +12,8 @@
 // properly
 #define WINDOW_WIDTH 840
 #define WINDOW_HEIGHT 680
-#define GRID_CELL_SIZE 50
-#define DEBUG_MODE false
+#define GRID_CELL_SIZE 25
+#define DEBUG_MODE true
 #define TIME_PER_TURN .25f
 #define CELL_OBSTACLE -1
 #define CELL_GOAL -2
@@ -21,6 +22,7 @@
 #define NO_COLUMNS (int)((WINDOW_WIDTH - 2 * MAIN_PADDING) / GRID_CELL_SIZE)
 #define NO_ROWS                                                                \
   (int)((WINDOW_HEIGHT - TOP_PADDING - MAIN_PADDING) / GRID_CELL_SIZE)
+#define GRID_SHIFT_THRESHOLD 3
 #define GAME_TITLE "ourosnake"
 
 struct Snake {
@@ -40,16 +42,6 @@ Vector2 directions[4] = {{0, -1}, {1, 0}, {0, 1}, {-1, 0}};
 void UpdateSnakePosition(int *grid, struct Snake *snake) {
   // Make the step
   snake->head = Vector2Add(snake->head, snake->direction);
-
-  // Wrap head position if outside of grid
-  if (snake->head.x >= (int)NO_COLUMNS)
-    snake->head.x = 0;
-  if (snake->head.x < 0)
-    snake->head.x = (int)NO_COLUMNS - 1;
-  if (snake->head.y >= (int)NO_ROWS)
-    snake->head.y = 0;
-  if (snake->head.y < 0)
-    snake->head.y = (int)NO_ROWS - 1;
 
   if (DEBUG_MODE)
     printf("[DEBUG]: Head is now x:%f y:%f\n", snake->head.x, snake->head.y);
@@ -84,15 +76,12 @@ void DrawGrid2D() {
   }
 }
 
-void DrawGameHeader(int *round) {
-  char roundText[256];
-  sprintf(roundText, "Round %d", *round);
-  DrawText(roundText, 10, 10, 24, WHITE);
-
-  const char *title = GAME_TITLE;
-  int titleFontSize = 48;
-  int titleWidth = MeasureText(title, titleFontSize);
-  DrawText(title, WINDOW_WIDTH / 2 - titleWidth / 2, 10, titleFontSize, GREEN);
+void DrawGameHeader() {
+  int cells = 10;
+  float time = 2.23f;
+  char info[256];
+  sprintf(info, "Generated %d cells in %f ms", cells, time);
+  DrawText(info, 10, 10, 24, WHITE);
 
   DrawFPS(WINDOW_WIDTH - 100, 10);
 }
@@ -137,11 +126,11 @@ void DrawObjects(int *grid) {
       }
 
       // Goal
-      if (grid[gridPosTranslated] == CELL_GOAL) {
-        DrawRectangle(x * GRID_CELL_SIZE + MAIN_PADDING + 1,
-                      y * GRID_CELL_SIZE + TOP_PADDING + 1, GRID_CELL_SIZE - 1,
-                      GRID_CELL_SIZE - 1, GetColor(0x00FF00FF));
-      }
+      // if (grid[gridPosTranslated] == CELL_GOAL) {
+      //   DrawRectangle(x * GRID_CELL_SIZE + MAIN_PADDING + 1,
+      //                 y * GRID_CELL_SIZE + TOP_PADDING + 1, GRID_CELL_SIZE -
+      //                 1, GRID_CELL_SIZE - 1, GetColor(0x00FF00FF));
+      // }
     }
   }
 }
@@ -268,17 +257,102 @@ void GenerateGoal(int *grid) {
   grid[(int)pos.y * NO_COLUMNS + (int)pos.x] = CELL_GOAL;
 }
 
+void GenerateEdgeObstacles(int *grid, int rowStart, int columnStart, int rowEnd,
+                           int columnEnd, int directionDelta) {
+
+  float spawnThresholds[4] = {.05f, .2f, .5f, .9f};
+
+  for (size_t y = rowStart; y < rowEnd; y += 1) {
+    for (size_t x = columnStart; x < columnEnd; x += 1) {
+      const int gridPosTranslated = y * NO_COLUMNS + x;
+      int obstaclesNearbyNumber = 0;
+      int complementaryDirectionDelta = 1;
+
+      if (abs(directionDelta) == 1)
+        complementaryDirectionDelta = NO_COLUMNS;
+
+      int targetNeighbourPositions[3] = {
+          gridPosTranslated + directionDelta + complementaryDirectionDelta,
+          gridPosTranslated + directionDelta,
+          gridPosTranslated + directionDelta - complementaryDirectionDelta};
+
+      for (size_t i = 0; i < 3; i++) {
+        if (targetNeighbourPositions[i] >= 0 &&
+            targetNeighbourPositions[i] < NO_COLUMNS * NO_ROWS) {
+          continue;
+        }
+
+        if (grid[targetNeighbourPositions[i]] == CELL_OBSTACLE)
+          obstaclesNearbyNumber++;
+      }
+
+      if (GetRandomValue(0, 99) / 100.0f <
+          spawnThresholds[obstaclesNearbyNumber]) {
+        grid[gridPosTranslated] = CELL_OBSTACLE;
+      }
+    }
+  }
+}
+
+void ShiftGridIfNeeded(int *grid, struct Snake *snake) {
+  int directionDelta = 0;
+  int rowStart = 0;
+  int columnStart = 0;
+  int rowEnd = NO_ROWS;
+  int columnEnd = NO_COLUMNS;
+  // Right shift - Left column needs fill
+  if (snake->head.x < GRID_SHIFT_THRESHOLD) {
+    columnEnd = 1;
+    directionDelta = 1;
+  }
+  // Left shift - Right column needs fill
+  if (snake->head.x >= NO_COLUMNS - GRID_SHIFT_THRESHOLD - 1) {
+    columnStart = NO_COLUMNS - 1;
+    directionDelta = -1;
+  }
+  // Down shift - Top column needs fill
+  if (snake->head.y < GRID_SHIFT_THRESHOLD) {
+    rowEnd = 1;
+    directionDelta = NO_COLUMNS;
+  }
+  // Up shift - Bottom column needs fill
+  if (snake->head.y >= NO_ROWS - GRID_SHIFT_THRESHOLD - 1) {
+    rowStart = NO_ROWS - 1;
+    directionDelta = -NO_COLUMNS;
+  }
+
+  // TODO: Snake position should be updated even if direction delta is not 0,
+  // e.g. running along the threshold edge
+  if (directionDelta == 0) {
+    UpdateSnakePosition(grid, snake);
+    return;
+  }
+
+  for (size_t y = 0; y < NO_ROWS; y += 1) {
+    for (size_t x = 0; x < NO_COLUMNS; x += 1) {
+      const int gridPosTranslated = y * NO_COLUMNS + x;
+      const int targetPos = gridPosTranslated + directionDelta;
+      if (targetPos < 0 || targetPos >= NO_COLUMNS * NO_ROWS)
+        continue;
+
+      grid[targetPos] = grid[gridPosTranslated];
+    }
+  }
+
+  GenerateEdgeObstacles(grid, rowStart, columnStart, rowEnd, columnEnd,
+                        directionDelta);
+}
+
 int main() {
   InitWindow(WINDOW_WIDTH, WINDOW_HEIGHT, GAME_TITLE);
   InitAudioDevice();
   // SetTargetFPS(60);
   // printf("Main init \n");
   int *grid = (int *)MemAlloc(NO_COLUMNS * NO_ROWS * sizeof(int));
-  int currentRound = 1;
   Vector2 head, initialDirection;
   struct Snake snake;
   float time;
-  bool gameOver, roundWon, restart;
+  bool gameOver, restart;
   Sound stepWav = LoadSound("assets/audio/step.wav");
   Sound winWav = LoadSound("assets/audio/win.wav");
   Sound loseWav = LoadSound("assets/audio/lose.wav");
@@ -297,17 +371,21 @@ int main() {
       // printf("Generating obstacles\n");
       GenerateInitialObstacles(grid, 5);
       // printf("Generating goal\n");
-      GenerateGoal(grid);
+      // GenerateGoal(grid);
 
       // printf("Generating snake head\n");
-      head.x = GetRandomValue(0, NO_COLUMNS - 1);
-      head.y = GetRandomValue(0, NO_ROWS - 1);
+      head.x = GetRandomValue(GRID_SHIFT_THRESHOLD,
+                              NO_COLUMNS - 1 - GRID_SHIFT_THRESHOLD);
+      head.y = GetRandomValue(GRID_SHIFT_THRESHOLD,
+                              NO_ROWS - 1 - GRID_SHIFT_THRESHOLD);
       // Avoid spawning directly on an obstacle
       // TODO: find a way to ensure obstacles are at least 2 spaces away from
       // the snake head spawn point
       while (grid[(int)head.y * NO_COLUMNS + (int)head.x] != 0) {
-        head.x = GetRandomValue(0, NO_COLUMNS - 1);
-        head.y = GetRandomValue(0, NO_ROWS - 1);
+        head.x = GetRandomValue(GRID_SHIFT_THRESHOLD,
+                                NO_COLUMNS - 1 - GRID_SHIFT_THRESHOLD);
+        head.y = GetRandomValue(GRID_SHIFT_THRESHOLD,
+                                NO_ROWS - 1 - GRID_SHIFT_THRESHOLD);
       }
 
       // printf("Setting snake head at [%d][%d] = %d\n", (int)head.x,
@@ -320,11 +398,10 @@ int main() {
       snake.length = 5;
       time = 0;
       gameOver = false;
-      roundWon = false;
       restart = false;
     }
 
-    if (!gameOver && !roundWon) {
+    if (!gameOver) {
       float dt = GetFrameTime();
       time += dt;
     }
@@ -337,35 +414,17 @@ int main() {
       if (IsKeyDown(KEY_R)) {
         // printf("Game over, r pressed\n");
         ClearGrid(grid);
-        currentRound = 1;
         gameOver = false;
         restart = true;
       }
     }
 
-    if (roundWon) {
-      if (IsKeyDown(KEY_ENTER)) {
-        // printf("Round won, enter pressed\n");
-        ClearGrid(grid);
-        currentRound++;
-        roundWon = false;
-        restart = true;
-      }
-    }
-
-    if (time > TIME_PER_TURN && !gameOver && !roundWon) {
+    if (time > TIME_PER_TURN && !gameOver) {
       // printf("Periodic game update\n");
       time -= TIME_PER_TURN;
-      // printf("Update snake position\n");
-      UpdateSnakePosition(grid, &snake);
+      ShiftGridIfNeeded(grid, &snake);
       // printf("Check for final round states\n");
-      if (grid[(int)snake.head.y * NO_COLUMNS + (int)snake.head.x] ==
-          CELL_GOAL) {
-        roundWon = true;
-        PlaySound(winWav);
-        goto draw;
-      } else if (grid[(int)snake.head.y * NO_COLUMNS + (int)snake.head.x] !=
-                 0) {
+      if (grid[(int)snake.head.y * NO_COLUMNS + (int)snake.head.x] != 0) {
         gameOver = true;
         PlaySound(loseWav);
         goto draw;
@@ -391,11 +450,7 @@ int main() {
       }
       // printf("Drawing grid\n");
       DrawGrid2D();
-      DrawGameHeader(&currentRound);
-      if (roundWon) {
-        // printf("Drawing round won box\n");
-        DrawEndRoundBox("Round Won", "Press enter to continue", 64, 12, GREEN);
-      }
+      DrawGameHeader();
       if (gameOver) {
         // printf("Drawing game over box\n");
         DrawEndRoundBox("Game Over", "Press R to restart", 64, 12, RED);
