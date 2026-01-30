@@ -18,8 +18,9 @@
 #define CELL_GOAL -2
 #define MAIN_PADDING 20
 #define TOP_PADDING 60
-#define NO_COLUMNS ((WINDOW_WIDTH - 2 * MAIN_PADDING) / GRID_CELL_SIZE)
-#define NO_ROWS ((WINDOW_HEIGHT - TOP_PADDING - MAIN_PADDING) / GRID_CELL_SIZE)
+#define NO_COLUMNS (int)((WINDOW_WIDTH - 2 * MAIN_PADDING) / GRID_CELL_SIZE)
+#define NO_ROWS                                                                \
+  (int)((WINDOW_HEIGHT - TOP_PADDING - MAIN_PADDING) / GRID_CELL_SIZE)
 #define GAME_TITLE "ourosnake"
 
 struct Snake {
@@ -268,7 +269,7 @@ void GenerateGoal(int *grid) {
 }
 
 int main() {
-  InitWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "ourosnake");
+  InitWindow(WINDOW_WIDTH, WINDOW_HEIGHT, GAME_TITLE);
   InitAudioDevice();
   // SetTargetFPS(60);
   // printf("Main init \n");
