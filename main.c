@@ -10,11 +10,11 @@
 
 // WARN: If NO_COLUMNS or NO_ROWS have floating points the game will not work
 // properly
-#define WINDOW_WIDTH 840
-#define WINDOW_HEIGHT 680
-#define GRID_CELL_SIZE 25
+#define WINDOW_WIDTH 1920
+#define WINDOW_HEIGHT 1080
+#define GRID_CELL_SIZE 10
 #define DEBUG_MODE false
-#define TIME_PER_TURN .25f
+#define TIME_PER_TURN .05f
 #define CELL_EMPTY 0
 #define CELL_OBSTACLE -1
 #define CELL_GOAL -2
@@ -25,6 +25,7 @@
   (int)((WINDOW_HEIGHT - TOP_PADDING - MAIN_PADDING) / GRID_CELL_SIZE)
 #define GRID_SHIFT_THRESHOLD 5
 #define GAME_TITLE "ourosnake"
+#define INVINCIBLE true
 
 struct Snake {
   Vector2 head;
@@ -114,18 +115,18 @@ void DrawObjects(int *grid) {
     for (size_t x = 0; x < NO_COLUMNS; x += 1) {
       const int gridPosTranslated = y * NO_COLUMNS + x;
 
-      // Snake
-      if (grid[gridPosTranslated] > 0) {
-        DrawRectangle(x * GRID_CELL_SIZE + MAIN_PADDING + 1,
-                      y * GRID_CELL_SIZE + TOP_PADDING + 1, GRID_CELL_SIZE - 1,
-                      GRID_CELL_SIZE - 1, GetColor(0x00FFFFFF));
-      }
-
       // Obstacle
       if (grid[gridPosTranslated] == CELL_OBSTACLE) {
         DrawRectangle(x * GRID_CELL_SIZE + MAIN_PADDING + 1,
                       y * GRID_CELL_SIZE + TOP_PADDING + 1, GRID_CELL_SIZE - 1,
                       GRID_CELL_SIZE - 1, GetColor(0xFFFFFFFF));
+      }
+
+      // Snake
+      if (grid[gridPosTranslated] > 0) {
+        DrawRectangle(x * GRID_CELL_SIZE + MAIN_PADDING + 1,
+                      y * GRID_CELL_SIZE + TOP_PADDING + 1, GRID_CELL_SIZE - 1,
+                      GRID_CELL_SIZE - 1, GetColor(0x00FFFFFF));
       }
     }
   }
@@ -257,7 +258,10 @@ void GenerateEdgeObstacles(int *grid, int rowStart, int columnStart, int rowEnd,
                            int columnEnd, int directionDelta,
                            double *averageTimePerCell) {
 
-  float spawnThresholds[4] = {.05f, .2f, .5f, .9f};
+  float spawnThresholds[4] = {.05f, .2f, .5f, .9f}; // classic
+  // float spawnThresholds[4] = {.1f, .4f, .7f, .8f}; // 90% full
+  // float spawnThresholds[4] = {.01f, .2f, .5f, .75f}; // sparse
+  // float spawnThresholds[4] = {.005f, .1f, .5f, .9f}; // boring
   int numberOfCellsGenerated = NO_COLUMNS;
   int complementaryDirectionDelta = 1;
 
@@ -396,6 +400,9 @@ int main() {
   restart = true;
   printf("Number of rows [%d] columns [%d]\n", NO_ROWS, NO_COLUMNS);
   printf("Entering main game loop\n");
+
+  if (!IsWindowFullscreen())
+    ToggleFullscreen();
   while (!WindowShouldClose()) {
     if (restart) {
       // printf("Classic init \n");
@@ -463,7 +470,8 @@ int main() {
       ShiftGridIfNeeded(grid, &snake, &averageTimePerCell);
       // printf("Check for final round states\n");
       if (grid[(int)snake.head.y * NO_COLUMNS + (int)snake.head.x] !=
-          CELL_EMPTY) {
+              CELL_EMPTY &&
+          !INVINCIBLE) {
         gameOver = true;
         PlaySound(loseWav);
         goto draw;
