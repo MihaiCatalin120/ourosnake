@@ -80,11 +80,10 @@ void DrawGrid2D() {
   }
 }
 
-void DrawGameHeader() {
-  int cells = 10;
-  float time = 2.23f;
+void DrawGameHeader(double averageTimePerCell) {
   char info[256];
-  sprintf(info, "Generated %d cells in %f ms", cells, time);
+  sprintf(info, "Average time elapsed per cell generated: %f ms",
+          averageTimePerCell);
   DrawText(info, 10, 10, 24, WHITE);
 
   DrawFPS(WINDOW_WIDTH - 100, 10);
@@ -255,19 +254,24 @@ void GenerateGoal(int *grid) {
 }
 
 void GenerateEdgeObstacles(int *grid, int rowStart, int columnStart, int rowEnd,
-                           int columnEnd, int directionDelta) {
+                           int columnEnd, int directionDelta,
+                           double *averageTimePerCell) {
 
   float spawnThresholds[4] = {.05f, .2f, .5f, .9f};
+  int numberOfCellsGenerated = NO_COLUMNS;
+  int complementaryDirectionDelta = 1;
+
+  if (abs(directionDelta) == 1) {
+    numberOfCellsGenerated = NO_ROWS;
+    complementaryDirectionDelta = NO_COLUMNS;
+  }
   // float spawnThresholds[4] = {.001f, .002f, .003f, .004f};
+  double startEdgeGenerationTime = GetTime();
 
   for (size_t y = rowStart; y < rowEnd; y += 1) {
     for (size_t x = columnStart; x < columnEnd; x += 1) {
       const int gridPosTranslated = y * NO_COLUMNS + x;
       int obstaclesNearbyNumber = 0;
-      int complementaryDirectionDelta = 1;
-
-      if (abs(directionDelta) == 1)
-        complementaryDirectionDelta = NO_COLUMNS;
 
       int targetNeighbourPositions[3] = {
           gridPosTranslated + directionDelta + complementaryDirectionDelta,
@@ -291,9 +295,15 @@ void GenerateEdgeObstacles(int *grid, int rowStart, int columnStart, int rowEnd,
         grid[gridPosTranslated] = 0;
     }
   }
+
+  *averageTimePerCell =
+      (*averageTimePerCell + (GetTime() - startEdgeGenerationTime) * 1000.0f /
+                                 numberOfCellsGenerated) /
+      2;
 }
 
-void ShiftGridIfNeeded(int *grid, struct Snake *snake) {
+void ShiftGridIfNeeded(int *grid, struct Snake *snake,
+                       double *averageTimePerCell) {
   int directionDelta = 0;
   int rowStart = 0;
   int columnStart = 0;
@@ -363,7 +373,7 @@ void ShiftGridIfNeeded(int *grid, struct Snake *snake) {
   }
 
   GenerateEdgeObstacles(grid, rowStart, columnStart, rowEnd, columnEnd,
-                        directionDelta);
+                        directionDelta, averageTimePerCell);
 
   UpdateSnakePosition(grid, snake, true);
 }
@@ -377,6 +387,7 @@ int main() {
   Vector2 head, initialDirection;
   struct Snake snake;
   float time;
+  double averageTimePerCell;
   bool gameOver, restart;
   Sound stepWav = LoadSound("assets/audio/step.wav");
   Sound winWav = LoadSound("assets/audio/win.wav");
@@ -424,6 +435,7 @@ int main() {
       time = 0;
       gameOver = false;
       restart = false;
+      averageTimePerCell = 0.0f;
     }
 
     if (!gameOver) {
@@ -448,7 +460,7 @@ int main() {
       // printf("Periodic game update\n");
       time -= TIME_PER_TURN;
       UpdateSnakePosition(grid, &snake, false);
-      ShiftGridIfNeeded(grid, &snake);
+      ShiftGridIfNeeded(grid, &snake, &averageTimePerCell);
       // printf("Check for final round states\n");
       if (grid[(int)snake.head.y * NO_COLUMNS + (int)snake.head.x] !=
           CELL_EMPTY) {
@@ -477,7 +489,7 @@ int main() {
       }
       // printf("Drawing grid\n");
       DrawGrid2D();
-      DrawGameHeader();
+      DrawGameHeader(averageTimePerCell);
       if (gameOver) {
         // printf("Drawing game over box\n");
         DrawEndRoundBox("Game Over", "Press R to restart", 64, 12, RED);
