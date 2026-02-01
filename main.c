@@ -14,6 +14,7 @@
 #define GRID_CELL_SIZE 50
 #define DEBUG_MODE false
 #define TIME_PER_TURN .25f
+#define CELL_EMPTY 0
 #define CELL_OBSTACLE -1
 #define CELL_GOAL -2
 #define MAIN_PADDING 20
@@ -61,7 +62,7 @@ void UpdateCellLives(int *grid, struct Snake snake) {
       const int gridPosTranslated = y * NO_COLUMNS + x;
 
       if ((int)snake.head.x == x && (int)snake.head.y == y) {
-        if (grid[gridPosTranslated] == 0)
+        if (grid[gridPosTranslated] == CELL_EMPTY)
           grid[gridPosTranslated] = snake.length;
       } else if (grid[gridPosTranslated] > 0) {
         grid[gridPosTranslated] -= 1;
@@ -233,7 +234,7 @@ void GenerateInitialObstacles(int *grid, int numberOfObstacles) {
 void ClearGrid(int *grid) {
   for (size_t y = 0; y < NO_ROWS; y += 1) {
     for (size_t x = 0; x < NO_COLUMNS; x += 1) {
-      grid[y * NO_COLUMNS + x] = 0;
+      grid[y * NO_COLUMNS + x] = CELL_EMPTY;
     }
   }
 }
@@ -259,7 +260,7 @@ void GenerateGoal(int *grid) {
   Vector2 pos = {GetRandomValue(0, NO_COLUMNS - 1),
                  GetRandomValue(0, NO_ROWS - 1)};
   // Avoid spawning directly on an obstacle or snake
-  while (grid[(int)pos.y * NO_COLUMNS + (int)pos.x] != 0) {
+  while (grid[(int)pos.y * NO_COLUMNS + (int)pos.x] != CELL_EMPTY) {
     pos.x = GetRandomValue(0, NO_COLUMNS - 1);
     pos.y = GetRandomValue(0, NO_ROWS - 1);
   }
@@ -305,7 +306,7 @@ int main() {
       // Avoid spawning directly on an obstacle
       // TODO: find a way to ensure obstacles are at least 2 spaces away from
       // the snake head spawn point
-      while (grid[(int)head.y * NO_COLUMNS + (int)head.x] != 0) {
+      while (grid[(int)head.y * NO_COLUMNS + (int)head.x] != CELL_EMPTY) {
         head.x = GetRandomValue(0, NO_COLUMNS - 1);
         head.y = GetRandomValue(0, NO_ROWS - 1);
       }
@@ -365,7 +366,7 @@ int main() {
         PlaySound(winWav);
         goto draw;
       } else if (grid[(int)snake.head.y * NO_COLUMNS + (int)snake.head.x] !=
-                 0) {
+                 CELL_EMPTY) {
         gameOver = true;
         PlaySound(loseWav);
         goto draw;
