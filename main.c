@@ -13,7 +13,7 @@
 #define WINDOW_WIDTH 840
 #define WINDOW_HEIGHT 680
 #define GRID_CELL_SIZE 25
-#define DEBUG_MODE true
+#define DEBUG_MODE false
 #define TIME_PER_TURN .25f
 #define CELL_OBSTACLE -1
 #define CELL_GOAL -2
@@ -22,7 +22,7 @@
 #define NO_COLUMNS (int)((WINDOW_WIDTH - 2 * MAIN_PADDING) / GRID_CELL_SIZE)
 #define NO_ROWS                                                                \
   (int)((WINDOW_HEIGHT - TOP_PADDING - MAIN_PADDING) / GRID_CELL_SIZE)
-#define GRID_SHIFT_THRESHOLD 3
+#define GRID_SHIFT_THRESHOLD 5
 #define GAME_TITLE "ourosnake"
 
 struct Snake {
@@ -39,9 +39,12 @@ struct ObstacleGenerator {
 // Up, Right, Down, Left
 Vector2 directions[4] = {{0, -1}, {1, 0}, {0, 1}, {-1, 0}};
 
-void UpdateSnakePosition(int *grid, struct Snake *snake) {
+void UpdateSnakePosition(int *grid, struct Snake *snake, bool revert) {
   // Make the step
-  snake->head = Vector2Add(snake->head, snake->direction);
+  if (revert)
+    snake->head = Vector2Subtract(snake->head, snake->direction);
+  else
+    snake->head = Vector2Add(snake->head, snake->direction);
 
   if (DEBUG_MODE)
     printf("[DEBUG]: Head is now x:%f y:%f\n", snake->head.x, snake->head.y);
@@ -124,13 +127,6 @@ void DrawObjects(int *grid) {
                       y * GRID_CELL_SIZE + TOP_PADDING + 1, GRID_CELL_SIZE - 1,
                       GRID_CELL_SIZE - 1, GetColor(0xFFFFFFFF));
       }
-
-      // Goal
-      // if (grid[gridPosTranslated] == CELL_GOAL) {
-      //   DrawRectangle(x * GRID_CELL_SIZE + MAIN_PADDING + 1,
-      //                 y * GRID_CELL_SIZE + TOP_PADDING + 1, GRID_CELL_SIZE -
-      //                 1, GRID_CELL_SIZE - 1, GetColor(0x00FF00FF));
-      // }
     }
   }
 }
@@ -261,6 +257,7 @@ void GenerateEdgeObstacles(int *grid, int rowStart, int columnStart, int rowEnd,
                            int columnEnd, int directionDelta) {
 
   float spawnThresholds[4] = {.05f, .2f, .5f, .9f};
+  // float spawnThresholds[4] = {.001f, .002f, .003f, .004f};
 
   for (size_t y = rowStart; y < rowEnd; y += 1) {
     for (size_t x = columnStart; x < columnEnd; x += 1) {
@@ -277,8 +274,8 @@ void GenerateEdgeObstacles(int *grid, int rowStart, int columnStart, int rowEnd,
           gridPosTranslated + directionDelta - complementaryDirectionDelta};
 
       for (size_t i = 0; i < 3; i++) {
-        if (targetNeighbourPositions[i] >= 0 &&
-            targetNeighbourPositions[i] < NO_COLUMNS * NO_ROWS) {
+        if (targetNeighbourPositions[i] < 0 &&
+            targetNeighbourPositions[i] >= NO_COLUMNS * NO_ROWS) {
           continue;
         }
 
@@ -286,10 +283,11 @@ void GenerateEdgeObstacles(int *grid, int rowStart, int columnStart, int rowEnd,
           obstaclesNearbyNumber++;
       }
 
-      if (GetRandomValue(0, 99) / 100.0f <
+      if (GetRandomValue(0, 999) / 1000.0f <
           spawnThresholds[obstaclesNearbyNumber]) {
         grid[gridPosTranslated] = CELL_OBSTACLE;
-      }
+      } else
+        grid[gridPosTranslated] = 0;
     }
   }
 }
@@ -306,7 +304,7 @@ void ShiftGridIfNeeded(int *grid, struct Snake *snake) {
     directionDelta = 1;
   }
   // Left shift - Right column needs fill
-  if (snake->head.x >= NO_COLUMNS - GRID_SHIFT_THRESHOLD - 1) {
+  if (snake->head.x > NO_COLUMNS - GRID_SHIFT_THRESHOLD - 1) {
     columnStart = NO_COLUMNS - 1;
     directionDelta = -1;
   }
@@ -316,31 +314,57 @@ void ShiftGridIfNeeded(int *grid, struct Snake *snake) {
     directionDelta = NO_COLUMNS;
   }
   // Up shift - Bottom column needs fill
-  if (snake->head.y >= NO_ROWS - GRID_SHIFT_THRESHOLD - 1) {
+  if (snake->head.y > NO_ROWS - GRID_SHIFT_THRESHOLD - 1) {
     rowStart = NO_ROWS - 1;
     directionDelta = -NO_COLUMNS;
   }
 
-  // TODO: Snake position should be updated even if direction delta is not 0,
-  // e.g. running along the threshold edge
-  if (directionDelta == 0) {
-    UpdateSnakePosition(grid, snake);
-    return;
-  }
+  switch (directionDelta) {
+  case -1:
+  case -NO_COLUMNS:
+    for (size_t y = 0; y < NO_ROWS; y += 1) {
+      for (size_t x = 0; x < NO_COLUMNS; x += 1) {
+        const int gridPosTranslated = y * NO_COLUMNS + x;
+        const int targetPos = gridPosTranslated + directionDelta;
+        if (targetPos < 0 || targetPos >= NO_COLUMNS * NO_ROWS)
+          continue;
 
-  for (size_t y = 0; y < NO_ROWS; y += 1) {
-    for (size_t x = 0; x < NO_COLUMNS; x += 1) {
-      const int gridPosTranslated = y * NO_COLUMNS + x;
-      const int targetPos = gridPosTranslated + directionDelta;
-      if (targetPos < 0 || targetPos >= NO_COLUMNS * NO_ROWS)
-        continue;
-
-      grid[targetPos] = grid[gridPosTranslated];
+        grid[targetPos] = grid[gridPosTranslated];
+      }
     }
+    break;
+  case 1:
+    for (size_t y = 0; y < NO_ROWS; y += 1) {
+      for (size_t x = NO_COLUMNS - 1; x > 0; x -= 1) {
+        const int gridPosTranslated = y * NO_COLUMNS + x;
+        const int targetPos = gridPosTranslated - directionDelta;
+        if (targetPos < 0 || targetPos >= NO_COLUMNS * NO_ROWS)
+          continue;
+
+        grid[gridPosTranslated] = grid[targetPos];
+      }
+    }
+    break;
+  case NO_COLUMNS:
+    for (size_t y = NO_ROWS - 1; y > 0; y -= 1) {
+      for (size_t x = 0; x < NO_COLUMNS; x += 1) {
+        const int gridPosTranslated = y * NO_COLUMNS + x;
+        const int targetPos = gridPosTranslated - directionDelta;
+        if (targetPos < 0 || targetPos >= NO_COLUMNS * NO_ROWS)
+          continue;
+
+        grid[gridPosTranslated] = grid[targetPos];
+      }
+    }
+    break;
+  default:
+    return;
   }
 
   GenerateEdgeObstacles(grid, rowStart, columnStart, rowEnd, columnEnd,
                         directionDelta);
+
+  UpdateSnakePosition(grid, snake, true);
 }
 
 int main() {
@@ -422,6 +446,7 @@ int main() {
     if (time > TIME_PER_TURN && !gameOver) {
       // printf("Periodic game update\n");
       time -= TIME_PER_TURN;
+      UpdateSnakePosition(grid, &snake, false);
       ShiftGridIfNeeded(grid, &snake);
       // printf("Check for final round states\n");
       if (grid[(int)snake.head.y * NO_COLUMNS + (int)snake.head.x] != 0) {
