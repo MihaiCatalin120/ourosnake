@@ -23,6 +23,7 @@
 #define NO_ROWS                                                                \
   (int)((WINDOW_HEIGHT - TOP_PADDING - MAIN_PADDING) / GRID_CELL_SIZE)
 #define GAME_TITLE "ourosnake"
+#define PAUSE_ENABLED false
 
 struct Snake {
   Vector2 head;
@@ -270,7 +271,6 @@ void GenerateGoal(int *grid) {
     pos.y = GetRandomValue(0, NO_ROWS - 1);
   }
 
-  // printf("Spawning goal at [%d][%d]\n", (int)pos.x, (int)pos.y);
   grid[(int)pos.y * NO_COLUMNS + (int)pos.x] = CELL_GOAL;
 }
 
@@ -278,13 +278,12 @@ int main() {
   InitWindow(WINDOW_WIDTH, WINDOW_HEIGHT, GAME_TITLE);
   InitAudioDevice();
   // SetTargetFPS(60);
-  // printf("Main init \n");
   int *grid = (int *)MemAlloc(NO_COLUMNS * NO_ROWS * sizeof(int));
   int currentRound = 1;
   Vector2 head, initialDirection;
   struct Snake snake;
   float time;
-  bool gameOver, roundWon, restart, muted;
+  bool gameOver, roundWon, restart, muted, paused;
   Sound stepWav = LoadSound("assets/audio/step.wav");
   Sound winWav = LoadSound("assets/audio/win.wav");
   Sound loseWav = LoadSound("assets/audio/lose.wav");
@@ -294,22 +293,19 @@ int main() {
 
   restart = true;
   muted = false;
+  paused = false;
   printf("Number of rows [%d] columns [%d]\n", NO_ROWS, NO_COLUMNS);
   printf("Entering main game loop\n");
   while (!WindowShouldClose()) {
     if (restart) {
-      // printf("Classic init \n");
-      // printf("Clearing grid \n");
       ClearGrid(grid);
 
       // TODO: find formula to ensure obstacles are not crowding
       // the grid / grid is not too empty
       // printf("Generating obstacles\n");
       GenerateInitialObstacles(grid, 5);
-      // printf("Generating goal\n");
       GenerateGoal(grid);
 
-      // printf("Generating snake head\n");
       head.x = GetRandomValue(0, NO_COLUMNS - 1);
       head.y = GetRandomValue(0, NO_ROWS - 1);
       // Avoid spawning directly on an obstacle
@@ -320,10 +316,6 @@ int main() {
         head.y = GetRandomValue(0, NO_ROWS - 1);
       }
 
-      // printf("Setting snake head at [%d][%d] = %d\n", (int)head.x,
-      // (int)head.y,
-      //        grid[(int)head.y * WINDOW_WIDTH + (int)head.x]);
-      // printf("Assigning init variable values\n");
       initialDirection = directions[GetRandomValue(0, 3)];
       snake.head = head;
       snake.direction = initialDirection;
@@ -334,18 +326,15 @@ int main() {
       restart = false;
     }
 
-    if (!gameOver && !roundWon) {
+    if (!gameOver && !roundWon && !paused) {
       float dt = GetFrameTime();
       time += dt;
     }
 
-    // printf("Checking inputs\n");
     CheckForDirectionChange(&snake);
 
-    // printf("Checking end game states\n");
     if (gameOver) {
       if (IsKeyDown(KEY_R)) {
-        // printf("Game over, r pressed\n");
         ClearGrid(grid);
         currentRound = 1;
         gameOver = false;
@@ -355,7 +344,6 @@ int main() {
 
     if (roundWon) {
       if (IsKeyDown(KEY_ENTER)) {
-        // printf("Round won, enter pressed\n");
         ClearGrid(grid);
         currentRound++;
         roundWon = false;
@@ -364,11 +352,14 @@ int main() {
     }
 
     if (IsKeyPressed(KEY_M)) {
-      // printf("Toggle muted\n");
       muted = !muted;
     }
 
-    if (time > TIME_PER_TURN && !gameOver && !roundWon) {
+    if (IsKeyPressed(KEY_P) && PAUSE_ENABLED) {
+      paused = !paused;
+    }
+
+    if (time > TIME_PER_TURN && !gameOver && !roundWon && !paused) {
       // printf("Periodic game update\n");
       time -= TIME_PER_TURN;
       // printf("Update snake position\n");
@@ -414,6 +405,10 @@ int main() {
       if (gameOver) {
         // printf("Drawing game over box\n");
         DrawEndRoundBox("Game Over", "Press R to restart", 64, 12, RED);
+      }
+      if (paused) {
+        // printf("Drawing game over box\n");
+        DrawEndRoundBox("Paused", "Press P to resume", 64, 12, BLUE);
       }
       if (muted) {
         DrawTexture(mutedTexture, WINDOW_WIDTH - 30, 30, RED);
