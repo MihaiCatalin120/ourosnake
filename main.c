@@ -567,11 +567,9 @@ int main() {
     }
 
     if (time > TIME_PER_TURN && !gameOver && !paused) {
-      // printf("Periodic game update\n");
       time -= TIME_PER_TURN;
       UpdateSnakePosition(grid, &snake, false);
       ShiftGridIfNeeded(grid, &snake, &averageTimePerCell);
-      // printf("Check for final round states\n");
       if (grid[(int)snake.head.y * NO_COLUMNS + (int)snake.head.x] !=
               CELL_EMPTY &&
           !INVINCIBLE) {
@@ -579,34 +577,25 @@ int main() {
         PlaySoundWithMuteCheck(loseWav, muted);
         goto draw;
       }
-      // printf("Updating rest of grid\n");
+
       UpdateCellLives(grid, snake);
       PlaySoundWithMuteCheck(stepWav, muted);
     }
-    // if (DEBUG_MODE) {
-    //   printf("[DEBUG]: Delta - %f\n", dt);
-    //   printf("[DEBUG]: Time - %f\n", time);
-    // }
   draw:
     if (!restart) {
-      // printf("Draw start\n");
       BeginDrawing();
       ClearBackground(GetColor(0x202020FF));
 
-      // printf("Drawing objects\n");
       DrawObjects(grid);
       if (DEBUG_MODE) {
         DrawDebugCellValues(grid);
       }
-      // printf("Drawing grid\n");
       DrawGrid2D();
       DrawGameHeader(averageTimePerCell);
       if (gameOver) {
-        // printf("Drawing game over box\n");
         DrawEndRoundBox("Game Over", "Press R to restart", 64, 12, RED);
       }
       if (paused) {
-        // printf("Drawing game over box\n");
         DrawEndRoundBox("Paused", "Press P to resume", 64, 12, BLUE);
       }
       if (muted) {
@@ -616,7 +605,6 @@ int main() {
     }
   }
 
-  // printf("Deallocating\n");
   CloseAudioDevice();
   UnloadTexture(mutedTexture);
   CloseWindow();
