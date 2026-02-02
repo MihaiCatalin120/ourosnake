@@ -71,6 +71,11 @@ void UpdateCellLives(int *grid, struct Snake snake) {
   }
 }
 
+void PlaySoundWithMuteCheck(Sound sound, bool muted) {
+  if (!muted)
+    PlaySound(sound);
+}
+
 void DrawGrid2D() {
   for (size_t x = 0; x <= NO_COLUMNS; x += 1) {
     DrawLine(x * GRID_CELL_SIZE + MAIN_PADDING, TOP_PADDING,
@@ -279,12 +284,16 @@ int main() {
   Vector2 head, initialDirection;
   struct Snake snake;
   float time;
-  bool gameOver, roundWon, restart;
+  bool gameOver, roundWon, restart, muted;
   Sound stepWav = LoadSound("assets/audio/step.wav");
   Sound winWav = LoadSound("assets/audio/win.wav");
   Sound loseWav = LoadSound("assets/audio/lose.wav");
+  Image mutedIcon = LoadImage("assets/icons/volume-mute-line.png");
+  Texture2D mutedTexture = LoadTextureFromImage(mutedIcon);
+  UnloadImage(mutedIcon);
 
   restart = true;
+  muted = false;
   printf("Number of rows [%d] columns [%d]\n", NO_ROWS, NO_COLUMNS);
   printf("Entering main game loop\n");
   while (!WindowShouldClose()) {
@@ -354,6 +363,11 @@ int main() {
       }
     }
 
+    if (IsKeyPressed(KEY_M)) {
+      // printf("Toggle muted\n");
+      muted = !muted;
+    }
+
     if (time > TIME_PER_TURN && !gameOver && !roundWon) {
       // printf("Periodic game update\n");
       time -= TIME_PER_TURN;
@@ -363,17 +377,17 @@ int main() {
       if (grid[(int)snake.head.y * NO_COLUMNS + (int)snake.head.x] ==
           CELL_GOAL) {
         roundWon = true;
-        PlaySound(winWav);
+        PlaySoundWithMuteCheck(winWav, muted);
         goto draw;
       } else if (grid[(int)snake.head.y * NO_COLUMNS + (int)snake.head.x] !=
                  CELL_EMPTY) {
         gameOver = true;
-        PlaySound(loseWav);
+        PlaySoundWithMuteCheck(loseWav, muted);
         goto draw;
       }
       // printf("Updating rest of grid\n");
       UpdateCellLives(grid, snake);
-      PlaySound(stepWav);
+      PlaySoundWithMuteCheck(stepWav, muted);
     }
     // if (DEBUG_MODE) {
     //   printf("[DEBUG]: Delta - %f\n", dt);
@@ -401,12 +415,16 @@ int main() {
         // printf("Drawing game over box\n");
         DrawEndRoundBox("Game Over", "Press R to restart", 64, 12, RED);
       }
+      if (muted) {
+        DrawTexture(mutedTexture, WINDOW_WIDTH - 30, 30, RED);
+      }
       EndDrawing();
     }
   }
 
   // printf("Deallocating\n");
   CloseAudioDevice();
+  UnloadTexture(mutedTexture);
   CloseWindow();
   MemFree(grid);
   return 0;
