@@ -1,6 +1,7 @@
 #include "raylib.h"
 #include "raymath.h"
 #include <assert.h>
+#include <pthread.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdio.h>
@@ -26,6 +27,7 @@
 #define GRID_SHIFT_THRESHOLD 5
 #define GAME_TITLE "ourosnake"
 #define INVINCIBLE true
+#define THREADING_LEVEL 1
 
 struct Snake {
   Vector2 head;
@@ -36,6 +38,16 @@ struct Snake {
 struct ObstacleGenerator {
   Vector2 startPosition;
   Vector2 moves[10]; // TODO: support dynamic moves max size
+};
+
+struct MarkEdgeThreadArgs {
+  int id;
+  int *grid;
+  size_t x;
+  size_t y;
+  int directionDelta;
+  int complementaryDirectionDelta;
+  float *spawnThresholds;
 };
 
 // Up, Right, Down, Left
@@ -259,6 +271,66 @@ void GenerateGoal(int *grid) {
   grid[(int)pos.y * NO_COLUMNS + (int)pos.x] = CELL_GOAL;
 }
 
+void MarkEdgeObstacle(int *grid, int x, int y, int directionDelta,
+                      int complementaryDirectionDelta, float *spawnThresholds) {
+  const int gridPosTranslated = y * NO_COLUMNS + x;
+  int obstaclesNearbyNumber = 0;
+
+  int targetNeighbourPositions[3] = {
+      gridPosTranslated + directionDelta + complementaryDirectionDelta,
+      gridPosTranslated + directionDelta,
+      gridPosTranslated + directionDelta - complementaryDirectionDelta};
+
+  for (size_t i = 0; i < 3; i++) {
+    if (targetNeighbourPositions[i] < 0 &&
+        targetNeighbourPositions[i] >= NO_COLUMNS * NO_ROWS) {
+      continue;
+    }
+
+    if (grid[targetNeighbourPositions[i]] == CELL_OBSTACLE)
+      obstaclesNearbyNumber++;
+  }
+
+  if (GetRandomValue(0, 999) / 1000.0f <
+      spawnThresholds[obstaclesNearbyNumber]) {
+    grid[gridPosTranslated] = CELL_OBSTACLE;
+  } else
+    grid[gridPosTranslated] = 0;
+}
+
+void *MarkEdgeObstacleThreaded(void *threadArgs) {
+  struct MarkEdgeThreadArgs *args = threadArgs;
+
+  printf("Thread %d: hello world\n", args->id);
+
+  const int gridPosTranslated = args->y * NO_COLUMNS + args->x;
+  int obstaclesNearbyNumber = 0;
+
+  int targetNeighbourPositions[3] = {gridPosTranslated + args->directionDelta +
+                                         args->complementaryDirectionDelta,
+                                     gridPosTranslated + args->directionDelta,
+                                     gridPosTranslated + args->directionDelta -
+                                         args->complementaryDirectionDelta};
+
+  for (size_t i = 0; i < 3; i++) {
+    if (targetNeighbourPositions[i] < 0 &&
+        targetNeighbourPositions[i] >= NO_COLUMNS * NO_ROWS) {
+      continue;
+    }
+
+    if (args->grid[targetNeighbourPositions[i]] == CELL_OBSTACLE)
+      obstaclesNearbyNumber++;
+  }
+
+  if (GetRandomValue(0, 999) / 1000.0f <
+      args->spawnThresholds[obstaclesNearbyNumber]) {
+    args->grid[gridPosTranslated] = CELL_OBSTACLE;
+  } else
+    args->grid[gridPosTranslated] = 0;
+
+  return NULL;
+}
+
 void GenerateEdgeObstacles(int *grid, int rowStart, int columnStart, int rowEnd,
                            int columnEnd, int directionDelta,
                            double *averageTimePerCell) {
@@ -274,34 +346,57 @@ void GenerateEdgeObstacles(int *grid, int rowStart, int columnStart, int rowEnd,
     numberOfCellsGenerated = NO_ROWS;
     complementaryDirectionDelta = NO_COLUMNS;
   }
-  // float spawnThresholds[4] = {.001f, .002f, .003f, .004f};
+
   double startEdgeGenerationTime = GetTime();
+  pthread_t threads[numberOfCellsGenerated];
+  int id = 0;
+  int threadResultCode;
+  struct MarkEdgeThreadArgs threadsArgs[numberOfCellsGenerated];
 
   for (size_t y = rowStart; y < rowEnd; y += 1) {
     for (size_t x = columnStart; x < columnEnd; x += 1) {
-      const int gridPosTranslated = y * NO_COLUMNS + x;
-      int obstaclesNearbyNumber = 0;
+      switch (THREADING_LEVEL) {
+      case 1:
+        // hack :(
+        {
+        } // hack :(
+        struct MarkEdgeThreadArgs args = {id,
+                                          grid,
+                                          x,
+                                          y,
+                                          directionDelta,
+                                          complementaryDirectionDelta,
+                                          spawnThresholds};
 
-      int targetNeighbourPositions[3] = {
-          gridPosTranslated + directionDelta + complementaryDirectionDelta,
-          gridPosTranslated + directionDelta,
-          gridPosTranslated + directionDelta - complementaryDirectionDelta};
+        threadsArgs[id] = args;
 
-      for (size_t i = 0; i < 3; i++) {
-        if (targetNeighbourPositions[i] < 0 &&
-            targetNeighbourPositions[i] >= NO_COLUMNS * NO_ROWS) {
-          continue;
-        }
+        printf("Main - Creating thread %d\n", id);
 
-        if (grid[targetNeighbourPositions[i]] == CELL_OBSTACLE)
-          obstaclesNearbyNumber++;
+        threadResultCode = pthread_create(
+            &threads[id], NULL, MarkEdgeObstacleThreaded, &threadsArgs[id]);
+        assert(!threadResultCode);
+        id++;
+
+        break;
+      default:
+        MarkEdgeObstacle(grid, x, y, directionDelta,
+                         complementaryDirectionDelta, spawnThresholds);
+        break;
       }
+    }
+  }
 
-      if (GetRandomValue(0, 999) / 1000.0f <
-          spawnThresholds[obstaclesNearbyNumber]) {
-        grid[gridPosTranslated] = CELL_OBSTACLE;
-      } else
-        grid[gridPosTranslated] = 0;
+  if (THREADING_LEVEL == 1) {
+    printf("Main - All threads created\n");
+    id = 0;
+
+    for (size_t y = rowStart; y < rowEnd; y += 1) {
+      for (size_t x = columnStart; x < columnEnd; x += 1) {
+        threadResultCode = pthread_join(threads[id], NULL);
+        assert(!threadResultCode);
+        printf("Main - End thread %d\n", id);
+        id++;
+      }
     }
   }
 
@@ -486,11 +581,6 @@ int main() {
       if (grid[(int)snake.head.y * NO_COLUMNS + (int)snake.head.x] !=
               CELL_EMPTY &&
           !INVINCIBLE) {
-        roundWon = true;
-        PlaySoundWithMuteCheck(winWav, muted);
-        goto draw;
-      } else if (grid[(int)snake.head.y * NO_COLUMNS + (int)snake.head.x] !=
-                 CELL_EMPTY) {
         gameOver = true;
         PlaySoundWithMuteCheck(loseWav, muted);
         goto draw;
