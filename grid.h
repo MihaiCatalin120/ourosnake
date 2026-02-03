@@ -1,8 +1,7 @@
-#ifndef UNITY_BUILD
-#define UNITY_BUILD
-
-#include "raylib.h"
 #include "snake.h"
+
+#ifndef GRID_H
+#define GRID_H
 
 void UpdateCellLives(
     int *grid,
@@ -10,4 +9,5 @@ void UpdateCellLives(
                            // appropiate cell positions
 void ClearGrid(int *grid); // Sets all the grid cells to empty
 void GenerateGoal(int *grid); // Generate a goal cell on the grid
+                              //
 #endif

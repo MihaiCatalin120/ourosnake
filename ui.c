@@ -136,18 +136,12 @@ void HandleInputs(int *grid, struct Snake *snake, bool *gameOver,
                   bool *paused) {
   if (*gameOver) {
     if (IsKeyDown(KEY_R)) {
-      ClearGrid(grid);
-      *currentRound = 1;
-      *gameOver = false;
       *restart = true;
     }
   }
 
-  if (roundWon) {
+  if (*roundWon) {
     if (IsKeyDown(KEY_ENTER)) {
-      ClearGrid(grid);
-      *currentRound = *currentRound + 1;
-      *roundWon = false;
       *restart = true;
     }
   }

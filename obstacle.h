@@ -1,11 +1,7 @@
-#ifndef UNITY_BUILD
-#define UNITY_BUILD
-#include "raylib.h"
+#include "utils.h"
 
-struct ObstacleGenerator {
-  Vector2 startPosition;
-  Vector2 moves[10]; // TODO: support dynamic moves max size
-};
+#ifndef OBSTACLE_H
+#define OBSTACLE_H
 
 void MarkObstacle(int *grid,
                   struct ObstacleGenerator
@@ -14,4 +10,5 @@ void MarkObstacle(int *grid,
 void GenerateInitialObstacles(
     int *grid,
     int numberOfObstacles); // Put n obstacle structures on the given grid
+                            //
 #endif

@@ -1,5 +1,3 @@
-#include "raylib.h"
-#include "raymath.h"
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdio.h>
@@ -7,8 +5,13 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "config.h"
 #include "grid.c"
+#include "grid.h"
+#include "obstacle.h"
+#include "snake.h"
+#include "ui.h"
+#include "utils.h"
+
 #include "main.c"
 #include "obstacle.c"
 #include "snake.c"

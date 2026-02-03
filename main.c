@@ -1,8 +1,12 @@
+#include "raylib.h"
+
 #include "config.h"
 #include "grid.h"
 #include "obstacle.h"
-#include "snake.h"
 #include "ui.h"
+
+#include <stdio.h>
+
 int main() {
   InitWindow(WINDOW_WIDTH, WINDOW_HEIGHT, GAME_TITLE);
   InitAudioDevice();
@@ -20,6 +24,7 @@ int main() {
   Texture2D mutedTexture = LoadTextureFromImage(mutedIcon);
   UnloadImage(mutedIcon);
 
+  // Initial restart
   restart = true;
   muted = false;
   paused = false;
@@ -50,6 +55,7 @@ int main() {
       snake.direction = initialDirection;
       snake.length = 5;
       time = 0;
+      currentRound = 1;
       gameOver = false;
       roundWon = false;
       restart = false;
@@ -59,6 +65,9 @@ int main() {
       float dt = GetFrameTime();
       time += dt;
     }
+
+    HandleInputs(grid, &snake, &gameOver, &currentRound, &restart, &roundWon,
+                 &muted, &paused);
 
     if (time > TIME_PER_TURN && !gameOver && !roundWon && !paused) {
       time -= TIME_PER_TURN;

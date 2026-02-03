@@ -1,5 +1,6 @@
-#ifndef UNITY_BUILD
-#define UNITY_BUILD
+#ifndef CONFIG_H
+#define CONFIG_H
+
 // WARN: If NO_COLUMNS or NO_ROWS have floating points the game will not work
 // properly
 #define WINDOW_WIDTH 840
@@ -16,6 +17,6 @@
 #define NO_ROWS                                                                \
   (int)((WINDOW_HEIGHT - TOP_PADDING - MAIN_PADDING) / GRID_CELL_SIZE)
 #define GAME_TITLE "ourosnake"
-#define PAUSE_ENABLED false
+#define PAUSE_ENABLED true
 
 #endif
