@@ -55,7 +55,10 @@ int main() {
       snake.direction = initialDirection;
       snake.length = 5;
       time = 0;
-      currentRound = 1;
+      if (!roundWon)
+        currentRound = 1;
+      else
+        currentRound++;
       gameOver = false;
       roundWon = false;
       restart = false;
