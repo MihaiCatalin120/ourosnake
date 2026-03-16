@@ -131,9 +131,8 @@ void CheckForDirectionChange(struct Snake *snake) {
   }
 }
 
-void HandleInputs(int *grid, struct Snake *snake, bool *gameOver,
-                  int *currentRound, bool *restart, bool *roundWon, bool *muted,
-                  bool *paused) {
+void HandleInputs(struct Snake *snake, bool *gameOver, bool *restart,
+                  bool *roundWon, bool *muted, bool *paused) {
   if (*gameOver) {
     if (IsKeyDown(KEY_R)) {
       *restart = true;

@@ -12,7 +12,7 @@ int main() {
   InitAudioDevice();
   // SetTargetFPS(60);
   int *grid = (int *)MemAlloc(NO_COLUMNS * NO_ROWS * sizeof(int));
-  int currentRound = 1;
+  int currentRound = 0;
   Vector2 head, initialDirection;
   struct Snake snake;
   float time;
@@ -45,7 +45,7 @@ int main() {
       // Avoid spawning directly on an obstacle
       // TODO: find a way to ensure obstacles are at least 2 spaces away from
       // the snake head spawn point
-      while (grid[(int)head.y * NO_COLUMNS + (int)head.x] != CELL_EMPTY) {
+      while (!IsValidSpawnPoint(grid, head, 3)) {
         head.x = GetRandomValue(0, NO_COLUMNS - 1);
         head.y = GetRandomValue(0, NO_ROWS - 1);
       }
@@ -69,8 +69,7 @@ int main() {
       time += dt;
     }
 
-    HandleInputs(grid, &snake, &gameOver, &currentRound, &restart, &roundWon,
-                 &muted, &paused);
+    HandleInputs(&snake, &gameOver, &restart, &roundWon, &muted, &paused);
 
     if (time > TIME_PER_TURN && !gameOver && !roundWon && !paused) {
       time -= TIME_PER_TURN;

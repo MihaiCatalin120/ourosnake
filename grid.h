@@ -9,5 +9,5 @@ void UpdateCellLives(
                            // appropiate cell positions
 void ClearGrid(int *grid); // Sets all the grid cells to empty
 void GenerateGoal(int *grid); // Generate a goal cell on the grid
-                              //
+bool IsValidSpawnPoint(int *grid, Vector2 head, int checkRadius);
 #endif
