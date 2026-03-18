@@ -1,7 +1,9 @@
 #include "ui.h"
 #include "config.h"
 #include "grid.h"
+#include "raylib.h"
 #include "raymath.h"
+#include "reasings.h"
 #include "utils.h"
 #include <stdio.h>
 
@@ -48,7 +50,7 @@ void DrawDebugCellValues(int *grid) {
   }
 }
 
-void DrawObjects(int *grid) {
+void DrawObjects(int *grid, int frameCounter) {
   for (size_t y = 0; y < NO_ROWS; y += 1) {
     for (size_t x = 0; x < NO_COLUMNS; x += 1) {
       const int gridPosTranslated = y * NO_COLUMNS + x;
@@ -76,9 +78,35 @@ void DrawObjects(int *grid) {
 
       // Powerup - Length increase
       if (grid[gridPosTranslated] == CELL_POWERUP_LENGTH_INCREASE) {
-        DrawRectangle(x * GRID_CELL_SIZE + MAIN_PADDING + 1,
-                      y * GRID_CELL_SIZE + TOP_PADDING + 1, GRID_CELL_SIZE - 1,
-                      GRID_CELL_SIZE - 1, GetColor(0xFF0000FF));
+        // DrawRectangle(x * GRID_CELL_SIZE + MAIN_PADDING + 1,
+        //               y * GRID_CELL_SIZE + TOP_PADDING + 1, GRID_CELL_SIZE -
+        //               1, GRID_CELL_SIZE - 1, GetColor(0xFF0000FF));
+        float cycleTime = frameCounter % ANIMATION_DURATION;
+        float normalizedTime = cycleTime / ANIMATION_DURATION;
+        float pingPongTime;
+        if (normalizedTime < 0.5f) {
+          pingPongTime = normalizedTime * 2.0f; // 0.0 to 1.0
+        } else {
+          pingPongTime = 2.0f - normalizedTime * 2.0f; // 1.0 to 0.0
+        }
+
+        float minScale = 0.4f;
+        float maxScale = 0.65f;
+        float scaleRange = maxScale - minScale;
+        float easedProgress = EaseCircOut(pingPongTime, 0.0f, 1.0f, 1.0f);
+        float scale = minScale + easedProgress * scaleRange;
+        float width = GRID_CELL_SIZE * scale, height = GRID_CELL_SIZE * scale;
+
+        DrawRectanglePro(
+            (Rectangle){
+                .x = x * GRID_CELL_SIZE + GRID_CELL_SIZE / 2.0f + MAIN_PADDING,
+                .y = y * GRID_CELL_SIZE + GRID_CELL_SIZE / 2.0f + TOP_PADDING,
+                .width = width,
+                .height = height,
+            },
+            (Vector2){width / 2.0f, height / 2.0f},
+            EaseLinearIn((float)frameCounter, 0.0f, 360.0f, ANIMATION_DURATION),
+            GetColor(0xFF0000FF));
       }
     }
   }

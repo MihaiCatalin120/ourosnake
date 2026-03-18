@@ -13,6 +13,7 @@ int main() {
   // SetTargetFPS(60);
   int *grid = (int *)MemAlloc(NO_COLUMNS * NO_ROWS * sizeof(int));
   int currentRound = 0;
+  int frameCounter = 0;
   Vector2 head, initialDirection;
   struct Snake snake;
   float time;
@@ -36,7 +37,10 @@ int main() {
   paused = false;
   printf("Number of rows [%d] columns [%d]\n", NO_ROWS, NO_COLUMNS);
   printf("Entering main game loop\n");
+
+  SetTargetFPS(60);
   while (!WindowShouldClose()) {
+    frameCounter++;
     UpdateMusicStream(bgWav);
     if (restart) {
       ClearGrid(grid);
@@ -105,7 +109,7 @@ int main() {
       BeginDrawing();
       ClearBackground(GetColor(0x202020FF));
 
-      DrawObjects(grid);
+      DrawObjects(grid, frameCounter);
       if (DEBUG_MODE) {
         DrawDebugCellValues(grid);
       }
