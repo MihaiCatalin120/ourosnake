@@ -73,6 +73,13 @@ void DrawObjects(int *grid) {
                       y * GRID_CELL_SIZE + TOP_PADDING + 1, GRID_CELL_SIZE - 1,
                       GRID_CELL_SIZE - 1, GetColor(0x00FF00FF));
       }
+
+      // Powerup - Length increase
+      if (grid[gridPosTranslated] == CELL_POWERUP_LENGTH_INCREASE) {
+        DrawRectangle(x * GRID_CELL_SIZE + MAIN_PADDING + 1,
+                      y * GRID_CELL_SIZE + TOP_PADDING + 1, GRID_CELL_SIZE - 1,
+                      GRID_CELL_SIZE - 1, GetColor(0xFF0000FF));
+      }
     }
   }
 }

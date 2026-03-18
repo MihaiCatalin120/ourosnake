@@ -10,7 +10,8 @@
 #define TIME_PER_TURN .25f
 #define CELL_EMPTY 0
 #define CELL_OBSTACLE -1
-#define CELL_GOAL -2
+#define CELL_GOAL 1
+#define CELL_POWERUP_LENGTH_INCREASE -2
 #define MAIN_PADDING 20
 #define TOP_PADDING 60
 #define NO_COLUMNS (int)((WINDOW_WIDTH - 2 * MAIN_PADDING) / GRID_CELL_SIZE)
@@ -18,5 +19,7 @@
   (int)((WINDOW_HEIGHT - TOP_PADDING - MAIN_PADDING) / GRID_CELL_SIZE)
 #define GAME_TITLE "ourosnake"
 #define PAUSE_ENABLED true
+#define CHECK_RADIUS 3
+#define MAX_TRIES_PER_CHECK_RADIUS 10
 
 #endif

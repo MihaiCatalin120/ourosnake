@@ -19,10 +19,16 @@ int main() {
   bool gameOver, roundWon, restart, muted, paused;
   Sound stepWav = LoadSound("assets/audio/step.wav");
   Sound winWav = LoadSound("assets/audio/win.wav");
+  Sound powerLengthUpWav = LoadSound("assets/audio/powerLengthUp.wav");
   Sound loseWav = LoadSound("assets/audio/lose.wav");
+  Music bgWav = LoadMusicStream("assets/audio/bg.wav");
   Image mutedIcon = LoadImage("assets/icons/volume-mute-line.png");
   Texture2D mutedTexture = LoadTextureFromImage(mutedIcon);
   UnloadImage(mutedIcon);
+
+  SetSoundVolume(stepWav, 0.2f);
+  SetMusicVolume(bgWav, 0.5f);
+  PlayMusicStream(bgWav);
 
   // Initial restart
   restart = true;
@@ -31,6 +37,7 @@ int main() {
   printf("Number of rows [%d] columns [%d]\n", NO_ROWS, NO_COLUMNS);
   printf("Entering main game loop\n");
   while (!WindowShouldClose()) {
+    UpdateMusicStream(bgWav);
     if (restart) {
       ClearGrid(grid);
 
@@ -38,17 +45,11 @@ int main() {
       // the grid / grid is not too empty
       // printf("Generating obstacles\n");
       GenerateInitialObstacles(grid, 5);
-      GenerateGoal(grid);
+      // GenerateGoal(grid);
+      GeneratePowerupLengthIncrease(grid);
 
-      head.x = GetRandomValue(0, NO_COLUMNS - 1);
-      head.y = GetRandomValue(0, NO_ROWS - 1);
-      // Avoid spawning directly on an obstacle
-      // TODO: find a way to ensure obstacles are at least 2 spaces away from
-      // the snake head spawn point
-      while (!IsValidSpawnPoint(grid, head, 3)) {
-        head.x = GetRandomValue(0, NO_COLUMNS - 1);
-        head.y = GetRandomValue(0, NO_ROWS - 1);
-      }
+      head =
+          GetValidGridPosition(grid, CHECK_RADIUS, MAX_TRIES_PER_CHECK_RADIUS);
 
       initialDirection = directions[GetRandomValue(0, 3)];
       snake.head = head;
@@ -69,19 +70,28 @@ int main() {
       time += dt;
     }
 
+    if (muted)
+      PauseMusicStream(bgWav);
+    else
+      ResumeMusicStream(bgWav);
+
     HandleInputs(&snake, &gameOver, &restart, &roundWon, &muted, &paused);
 
     if (time > TIME_PER_TURN && !gameOver && !roundWon && !paused) {
       time -= TIME_PER_TURN;
       UpdateSnakePosition(grid, &snake);
+      int currentHeadPosition =
+          grid[(int)snake.head.y * NO_COLUMNS + (int)snake.head.x];
 
-      if (grid[(int)snake.head.y * NO_COLUMNS + (int)snake.head.x] ==
-          CELL_GOAL) {
+      if (currentHeadPosition == CELL_GOAL) {
         roundWon = true;
         PlaySoundWithMuteCheck(winWav, muted);
         goto draw;
-      } else if (grid[(int)snake.head.y * NO_COLUMNS + (int)snake.head.x] !=
-                 CELL_EMPTY) {
+      } else if (currentHeadPosition == CELL_POWERUP_LENGTH_INCREASE) {
+        IncreaseSnakeLength(grid, &snake);
+        GeneratePowerupLengthIncrease(grid);
+        PlaySoundWithMuteCheck(powerLengthUpWav, muted);
+      } else if (currentHeadPosition != CELL_EMPTY) {
         gameOver = true;
         PlaySoundWithMuteCheck(loseWav, muted);
         goto draw;
@@ -119,6 +129,7 @@ int main() {
 
   CloseAudioDevice();
   UnloadTexture(mutedTexture);
+  UnloadMusicStream(bgWav);
   CloseWindow();
   MemFree(grid);
   return 0;
