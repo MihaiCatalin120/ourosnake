@@ -50,7 +50,7 @@ void DrawDebugCellValues(int *grid) {
   }
 }
 
-void DrawObjects(int *grid, int frameCounter) {
+void DrawObjects(int *grid, int frameCounter, bool isGoalAvailable) {
   for (size_t y = 0; y < NO_ROWS; y += 1) {
     for (size_t x = 0; x < NO_COLUMNS; x += 1) {
       const int gridPosTranslated = y * NO_COLUMNS + x;
@@ -73,7 +73,8 @@ void DrawObjects(int *grid, int frameCounter) {
       if (grid[gridPosTranslated] == CELL_GOAL) {
         DrawRectangle(x * GRID_CELL_SIZE + MAIN_PADDING + 1,
                       y * GRID_CELL_SIZE + TOP_PADDING + 1, GRID_CELL_SIZE - 1,
-                      GRID_CELL_SIZE - 1, GetColor(0x00FF00FF));
+                      GRID_CELL_SIZE - 1,
+                      GetColor(isGoalAvailable ? 0x00FF00FF : 0x00FFFFFF));
       }
 
       // Powerup - Length increase

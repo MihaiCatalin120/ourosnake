@@ -10,7 +10,6 @@
 int main() {
   InitWindow(WINDOW_WIDTH, WINDOW_HEIGHT, GAME_TITLE);
   InitAudioDevice();
-  // SetTargetFPS(60);
   int *grid = (int *)MemAlloc(NO_COLUMNS * NO_ROWS * sizeof(int));
   int currentRound = 0;
   int frameCounter = 0;
@@ -88,8 +87,13 @@ int main() {
           grid[(int)snake.head.y * NO_COLUMNS + (int)snake.head.x];
 
       if (currentHeadPosition == CELL_GOAL) {
-        roundWon = true;
-        PlaySoundWithMuteCheck(winWav, muted);
+        if (snake.length >= currentRound) {
+          roundWon = true;
+          PlaySoundWithMuteCheck(winWav, muted);
+        } else {
+          gameOver = true;
+          PlaySoundWithMuteCheck(loseWav, muted);
+        }
         goto draw;
       } else if (currentHeadPosition == CELL_POWERUP_LENGTH_INCREASE) {
         IncreaseSnakeLength(grid, &snake);
@@ -109,7 +113,7 @@ int main() {
       BeginDrawing();
       ClearBackground(GetColor(0x202020FF));
 
-      DrawObjects(grid, frameCounter);
+      DrawObjects(grid, frameCounter, snake.length >= currentRound);
       if (DEBUG_MODE) {
         DrawDebugCellValues(grid);
       }

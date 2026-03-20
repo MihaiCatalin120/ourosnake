@@ -8,8 +8,8 @@ void DrawGrid2D();                   // Draws the grid lines
 void DrawGameHeader(int *round);     // Draw the elements from the game header
 void DrawDebugCellValues(int *grid); // Shows the grid values
 void DrawObjects(
-    int *grid,
-    int frameCounter); // Draws the filling objects (snake, obstacles, goal)
+    int *grid, int frameCounter,
+    bool isGoalAvailable); // Draws the filling objects (snake, obstacles, goal)
 void DrawEndRoundBox(
     const char mainText[], const char secondaryText[], int mainFontSize,
     int secondaryFontSize,
