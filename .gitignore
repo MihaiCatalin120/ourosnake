@@ -129,7 +129,5 @@ src/platforms
 .git
 
 raylib_win
-main.out
-*.out
 main.out*
 main_test*

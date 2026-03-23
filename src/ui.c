@@ -1,9 +1,9 @@
 #include "ui.h"
+#include "../lib/reasings.h"
 #include "config.h"
 #include "grid.h"
 #include "raylib.h"
 #include "raymath.h"
-#include "reasings.h"
 #include "stdlib.h"
 #include "utils.h"
 #include <stdio.h>
