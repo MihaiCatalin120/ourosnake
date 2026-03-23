@@ -113,7 +113,8 @@ int main() {
       BeginDrawing();
       ClearBackground(GetColor(0x202020FF));
 
-      DrawObjects(grid, frameCounter, snake.length >= currentRound);
+      DrawObjects(grid, frameCounter, snake.length >= currentRound,
+                  currentRound - snake.length);
       if (DEBUG_MODE) {
         DrawDebugCellValues(grid);
       }

@@ -50,12 +50,13 @@ void DrawDebugCellValues(int *grid) {
   }
 }
 
-void DrawObjects(int *grid, int frameCounter, bool isGoalAvailable) {
+void DrawObjects(int *grid, int frameCounter, bool isGoalAvailable,
+                 int goalRequirementCounter) {
   for (size_t y = 0; y < NO_ROWS; y += 1) {
     for (size_t x = 0; x < NO_COLUMNS; x += 1) {
       const int gridPosTranslated = y * NO_COLUMNS + x;
 
-      // Snake
+      // Snake (body)
       if (grid[gridPosTranslated] > 0) {
         DrawRectangle(x * GRID_CELL_SIZE + MAIN_PADDING + 1,
                       y * GRID_CELL_SIZE + TOP_PADDING + 1, GRID_CELL_SIZE - 1,
@@ -71,17 +72,29 @@ void DrawObjects(int *grid, int frameCounter, bool isGoalAvailable) {
 
       // Goal
       if (grid[gridPosTranslated] == CELL_GOAL) {
-        DrawRectangle(x * GRID_CELL_SIZE + MAIN_PADDING + 1,
-                      y * GRID_CELL_SIZE + TOP_PADDING + 1, GRID_CELL_SIZE - 1,
-                      GRID_CELL_SIZE - 1,
-                      GetColor(isGoalAvailable ? 0x00FF00FF : 0x00FFFFFF));
+        if (isGoalAvailable) {
+          DrawRectangle(x * GRID_CELL_SIZE + MAIN_PADDING + 1,
+                        y * GRID_CELL_SIZE + TOP_PADDING + 1,
+                        GRID_CELL_SIZE - 1, GRID_CELL_SIZE - 1,
+                        GetColor(isGoalAvailable ? 0x00FF00FF : 0x00FFFFFF));
+        } else {
+          // Snake (tail non-active)
+          DrawRectangle(x * GRID_CELL_SIZE + MAIN_PADDING + 1,
+                        y * GRID_CELL_SIZE + TOP_PADDING + 1,
+                        GRID_CELL_SIZE - 1, GRID_CELL_SIZE - 1,
+                        GetColor(0x00FFFFFF));
+          char text[4];
+          int fontSize = Clamp(GRID_CELL_SIZE, 10, 64);
+          sprintf(text, "%d", goalRequirementCounter);
+          DrawText(text, x * GRID_CELL_SIZE + MAIN_PADDING + GRID_CELL_SIZE / 4,
+                   y * GRID_CELL_SIZE + TOP_PADDING + GRID_CELL_SIZE / 2 -
+                       fontSize / 2,
+                   fontSize, GetColor(0x000000FF));
+        }
       }
 
       // Powerup - Length increase
       if (grid[gridPosTranslated] == CELL_POWERUP_LENGTH_INCREASE) {
-        // DrawRectangle(x * GRID_CELL_SIZE + MAIN_PADDING + 1,
-        //               y * GRID_CELL_SIZE + TOP_PADDING + 1, GRID_CELL_SIZE -
-        //               1, GRID_CELL_SIZE - 1, GetColor(0xFF0000FF));
         float cycleTime = frameCounter % ANIMATION_DURATION;
         float normalizedTime = cycleTime / ANIMATION_DURATION;
         float pingPongTime;
