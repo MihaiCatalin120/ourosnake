@@ -9,7 +9,7 @@ If you want to compile a custom version of the game, follow the steps below acco
 Go into raylib/src, then run `make`<br>
 
 After that compile and run project with:<br>
-`gcc -Iraylib/src/ -o ./ourosnake ./src/all.c -lraylib -lGL -lm -ldl -lrt -lX11 -Lraylib/src/ -l:libraylib.a && ./main`
+`gcc -Iraylib/src/ -o ./ourosnake ./src/all.c -lraylib -lGL -lm -ldl -lrt -lX11 -Lraylib/src/ -l:libraylib.a && ./ourosnake`
 
 ### Mac setup:
 Go into raylib/src, then run `make`<br>
