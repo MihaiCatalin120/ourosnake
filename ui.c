@@ -4,6 +4,7 @@
 #include "raylib.h"
 #include "raymath.h"
 #include "reasings.h"
+#include "stdlib.h"
 #include "utils.h"
 #include <stdio.h>
 
@@ -50,6 +51,49 @@ void DrawDebugCellValues(int *grid) {
   }
 }
 
+void FillSnakeEdge(int x, int y, int *grid, Color color) {
+  Vector2 current = {x, y};
+  bool neighbours[4] = {false, false, false, false};
+  for (size_t i = 0; i < 4; i++) {
+    Vector2 neighbour = Vector2Add(current, directions[i]);
+    if (neighbour.x < 0 || neighbour.x >= NO_COLUMNS || neighbour.y < 0 ||
+        neighbour.y >= NO_ROWS)
+      continue;
+
+    const int currentPosTranslated = y * NO_COLUMNS + x;
+    const int neighbourPosTranslated = neighbour.y * NO_COLUMNS + neighbour.x;
+    if (grid[neighbourPosTranslated] > 0 &&
+        abs(grid[currentPosTranslated] - grid[neighbourPosTranslated]) == 1) {
+      neighbours[i] = true;
+
+      switch (i) {
+      case 0:
+        DrawRectangle(x * GRID_CELL_SIZE + MAIN_PADDING + SNAKE_PADDING,
+                      y * GRID_CELL_SIZE + TOP_PADDING,
+                      GRID_CELL_SIZE - 2 * SNAKE_PADDING, SNAKE_PADDING, color);
+        break;
+      case 1:
+        DrawRectangle(x * GRID_CELL_SIZE + MAIN_PADDING + GRID_CELL_SIZE -
+                          SNAKE_PADDING,
+                      y * GRID_CELL_SIZE + TOP_PADDING + SNAKE_PADDING,
+                      SNAKE_PADDING, GRID_CELL_SIZE - 2 * SNAKE_PADDING, color);
+        break;
+      case 2:
+        DrawRectangle(x * GRID_CELL_SIZE + MAIN_PADDING + SNAKE_PADDING,
+                      y * GRID_CELL_SIZE + TOP_PADDING + GRID_CELL_SIZE -
+                          SNAKE_PADDING,
+                      GRID_CELL_SIZE - 2 * SNAKE_PADDING, SNAKE_PADDING, color);
+        break;
+      case 3:
+        DrawRectangle(x * GRID_CELL_SIZE + MAIN_PADDING,
+                      y * GRID_CELL_SIZE + TOP_PADDING + SNAKE_PADDING,
+                      SNAKE_PADDING, GRID_CELL_SIZE - 2 * SNAKE_PADDING, color);
+        break;
+      }
+    }
+  }
+}
+
 void DrawObjects(int *grid, int frameCounter, bool isGoalAvailable,
                  int goalRequirementCounter) {
   for (size_t y = 0; y < NO_ROWS; y += 1) {
@@ -58,39 +102,45 @@ void DrawObjects(int *grid, int frameCounter, bool isGoalAvailable,
 
       // Snake (body)
       if (grid[gridPosTranslated] > 0) {
-        DrawRectangle(x * GRID_CELL_SIZE + MAIN_PADDING + 1,
-                      y * GRID_CELL_SIZE + TOP_PADDING + 1, GRID_CELL_SIZE - 1,
-                      GRID_CELL_SIZE - 1, GetColor(0x00FFFFFF));
+        Color color = GetColor(0x00FFFFFF);
+        DrawRectangle(x * GRID_CELL_SIZE + MAIN_PADDING + SNAKE_PADDING,
+                      y * GRID_CELL_SIZE + TOP_PADDING + SNAKE_PADDING,
+                      GRID_CELL_SIZE - 2 * SNAKE_PADDING,
+                      GRID_CELL_SIZE - 2 * SNAKE_PADDING, color);
+        FillSnakeEdge(x, y, grid, color);
       }
 
       // Obstacle
       if (grid[gridPosTranslated] == CELL_OBSTACLE) {
-        DrawRectangle(x * GRID_CELL_SIZE + MAIN_PADDING + 1,
-                      y * GRID_CELL_SIZE + TOP_PADDING + 1, GRID_CELL_SIZE - 1,
-                      GRID_CELL_SIZE - 1, GetColor(0xFFFFFFFF));
+        DrawRectangle(x * GRID_CELL_SIZE + MAIN_PADDING,
+                      y * GRID_CELL_SIZE + TOP_PADDING, GRID_CELL_SIZE,
+                      GRID_CELL_SIZE, GetColor(0xFFFFFFFF));
       }
 
       // Goal
       if (grid[gridPosTranslated] == CELL_GOAL) {
+        Color color = GetColor(0x00FF00FF);
         if (isGoalAvailable) {
-          DrawRectangle(x * GRID_CELL_SIZE + MAIN_PADDING + 1,
-                        y * GRID_CELL_SIZE + TOP_PADDING + 1,
-                        GRID_CELL_SIZE - 1, GRID_CELL_SIZE - 1,
-                        GetColor(isGoalAvailable ? 0x00FF00FF : 0x00FFFFFF));
+          DrawRectangle(x * GRID_CELL_SIZE + MAIN_PADDING + SNAKE_PADDING,
+                        y * GRID_CELL_SIZE + TOP_PADDING + SNAKE_PADDING,
+                        GRID_CELL_SIZE - 2 * SNAKE_PADDING,
+                        GRID_CELL_SIZE - 2 * SNAKE_PADDING, color);
         } else {
           // Snake (tail non-active)
-          DrawRectangle(x * GRID_CELL_SIZE + MAIN_PADDING + 1,
-                        y * GRID_CELL_SIZE + TOP_PADDING + 1,
-                        GRID_CELL_SIZE - 1, GRID_CELL_SIZE - 1,
-                        GetColor(0x00FFFFFF));
+          color = GetColor(0x00FFFFFF);
+          DrawRectangle(x * GRID_CELL_SIZE + MAIN_PADDING + SNAKE_PADDING,
+                        y * GRID_CELL_SIZE + TOP_PADDING + SNAKE_PADDING,
+                        GRID_CELL_SIZE - 2 * SNAKE_PADDING,
+                        GRID_CELL_SIZE - 2 * SNAKE_PADDING, color);
           char text[4];
-          int fontSize = Clamp(GRID_CELL_SIZE, 10, 64);
+          int fontSize = Clamp(GRID_CELL_SIZE / 2.0f, 10, 64);
           sprintf(text, "%d", goalRequirementCounter);
           DrawText(text, x * GRID_CELL_SIZE + MAIN_PADDING + GRID_CELL_SIZE / 4,
                    y * GRID_CELL_SIZE + TOP_PADDING + GRID_CELL_SIZE / 2 -
                        fontSize / 2,
                    fontSize, GetColor(0x000000FF));
         }
+        FillSnakeEdge(x, y, grid, color);
       }
 
       // Powerup - Length increase
