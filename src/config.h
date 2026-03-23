@@ -29,5 +29,6 @@
 #define CHECK_RADIUS 3
 #define MAX_TRIES_PER_CHECK_RADIUS 10
 #define ANIMATION_DURATION 180 // 60 fps * 3 seconds
+#define LOGO_FRAME_SPEED 8
 
 #endif

@@ -24,8 +24,10 @@ int main() {
   Music bgWav = LoadMusicStream("assets/audio/bg.wav");
   Image mutedIcon = LoadImage("assets/icons/volume-mute-line.png");
   Texture2D mutedTexture = LoadTextureFromImage(mutedIcon);
+  Texture2D logo = LoadTexture("assets/icons/logo-animated.png");
+  Rectangle logoRec = {0, 0, (float)logo.width / 21, (float)logo.height};
+  int logoFrame = 0;
   UnloadImage(mutedIcon);
-
   SetSoundVolume(stepWav, 0.2f);
   SetMusicVolume(bgWav, 0.5f);
   PlayMusicStream(bgWav);
@@ -40,6 +42,15 @@ int main() {
   SetTargetFPS(60);
   while (!WindowShouldClose()) {
     frameCounter++;
+
+    if (frameCounter % (60 / LOGO_FRAME_SPEED) == 0) {
+      logoFrame++;
+
+      if (logoFrame >= 21)
+        logoFrame = 0;
+      logoRec.x = (float)logoFrame * (float)logo.width / 21;
+    }
+
     UpdateMusicStream(bgWav);
     if (restart) {
       ClearGrid(grid);
@@ -119,7 +130,7 @@ int main() {
         DrawDebugCellValues(grid);
       }
       DrawGrid2D();
-      DrawGameHeader(&currentRound);
+      DrawGameHeader(&currentRound, logo, logoRec);
       if (roundWon) {
         DrawEndRoundBox("Round Won", "Press enter to continue", 64, 12, GREEN);
       }
@@ -130,7 +141,7 @@ int main() {
         DrawEndRoundBox("Paused", "Press P to resume", 64, 12, BLUE);
       }
       if (muted) {
-        DrawTexture(mutedTexture, WINDOW_WIDTH - 30, 30, RED);
+        DrawTexture(mutedTexture, WINDOW_WIDTH - 30, 10, RED);
       }
       EndDrawing();
     }
@@ -138,6 +149,7 @@ int main() {
 
   CloseAudioDevice();
   UnloadTexture(mutedTexture);
+  UnloadTexture(logo);
   UnloadMusicStream(bgWav);
   CloseWindow();
   MemFree(grid);

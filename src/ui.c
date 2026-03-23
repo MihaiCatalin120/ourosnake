@@ -22,17 +22,33 @@ void DrawGrid2D() {
   }
 }
 
-void DrawGameHeader(int *round) {
+void DrawGameHeader(int *round, Texture2D logoTexture, Rectangle logoRec) {
   char roundText[256];
   sprintf(roundText, "Round %d", *round);
   DrawText(roundText, 10, 10, 24, WHITE);
 
   const char *title = GAME_TITLE;
+  title++;
   int titleFontSize = 48;
   int titleWidth = MeasureText(title, titleFontSize);
-  DrawText(title, WINDOW_WIDTH / 2 - titleWidth / 2, 10, titleFontSize, GREEN);
+  DrawText(title,
+           WINDOW_WIDTH / 2.0f - (titleWidth + logoRec.width) / 2.0f +
+               logoRec.width,
+           10, titleFontSize, GREEN);
 
-  DrawFPS(WINDOW_WIDTH - 100, 10);
+  DrawTextureRec(
+      logoTexture, logoRec,
+      (Vector2){WINDOW_WIDTH / 2.0f - (titleWidth + logoRec.width) / 2.0f, 10},
+      WHITE);
+
+  const char *mutedText = "Mute (M)";
+  int mutedTextSize = 16;
+  int mutedTextWidth = MeasureText(mutedText, mutedTextSize);
+  DrawText("Mute (M)", WINDOW_WIDTH - mutedTextWidth - 40, 14, mutedTextSize,
+           WHITE);
+
+  if (DEBUG_MODE)
+    DrawFPS(WINDOW_WIDTH - 100, 10);
 }
 
 void DrawDebugCellValues(int *grid) {
@@ -53,7 +69,6 @@ void DrawDebugCellValues(int *grid) {
 
 void FillSnakeEdge(int x, int y, int *grid, Color color) {
   Vector2 current = {x, y};
-  bool neighbours[4] = {false, false, false, false};
   for (size_t i = 0; i < 4; i++) {
     Vector2 neighbour = Vector2Add(current, directions[i]);
     if (neighbour.x < 0 || neighbour.x >= NO_COLUMNS || neighbour.y < 0 ||
@@ -64,8 +79,6 @@ void FillSnakeEdge(int x, int y, int *grid, Color color) {
     const int neighbourPosTranslated = neighbour.y * NO_COLUMNS + neighbour.x;
     if (grid[neighbourPosTranslated] > 0 &&
         abs(grid[currentPosTranslated] - grid[neighbourPosTranslated]) == 1) {
-      neighbours[i] = true;
-
       switch (i) {
       case 0:
         DrawRectangle(x * GRID_CELL_SIZE + MAIN_PADDING + SNAKE_PADDING,

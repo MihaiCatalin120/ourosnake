@@ -4,8 +4,10 @@
 #ifndef UI_H
 #define UI_H
 
-void DrawGrid2D();                   // Draws the grid lines
-void DrawGameHeader(int *round);     // Draw the elements from the game header
+void DrawGrid2D(); // Draws the grid lines
+void DrawGameHeader(
+    int *round, Texture2D logoTexture,
+    Rectangle logoRec);              // Draw the elements from the game header
 void DrawDebugCellValues(int *grid); // Shows the grid values
 void DrawObjects(int *grid, int frameCounter, bool isGoalAvailable,
                  int goalRequirementCounter); // Draws the filling objects
