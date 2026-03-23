@@ -32,4 +32,9 @@ Then run the game by opening ourosnake.exe
 #### Notes:
 In order to debug don't forget to add the -g flag to the compiler so breakpoints are not ignored :)
 
+Created with [Raylib](https://www.raylib.com/)
+Background music made with [BeepBox](https://www.beepbox.co/)
+Sound effects made with [rFXGen](https://raylibtech.itch.io/rfxgen)
+Logo created in [Piskel](https://www.piskelapp.com/)
+
 Enjoy :D
