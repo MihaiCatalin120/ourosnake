@@ -6,6 +6,7 @@
 void UpdateSnakePosition(int *grid, struct Snake *snake) {
   // Make the step
   snake->head = Vector2Add(snake->head, snake->direction);
+  snake->lastDirectionTaken = snake->direction;
 
   // Wrap head position if outside of grid
   if (snake->head.x >= (int)NO_COLUMNS)

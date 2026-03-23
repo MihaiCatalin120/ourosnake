@@ -5,6 +5,7 @@
 struct Snake {
   Vector2 head;
   Vector2 direction;
+  Vector2 lastDirectionTaken;
   int length;
 };
 

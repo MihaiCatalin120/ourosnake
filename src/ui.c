@@ -216,12 +216,14 @@ void CheckForDirectionChange(struct Snake *snake) {
   int leftCases[2] = {KEY_LEFT, KEY_A};
 
   if (!Vector2Equals(snake->direction, directions[2]) &&
+      !Vector2Equals(snake->lastDirectionTaken, directions[2]) &&
       IsValueInArray(key, upCases, sizeof(upCases) / sizeof(upCases[0]))) {
     snake->direction = directions[0];
     return;
   }
 
   if (!Vector2Equals(snake->direction, directions[3]) &&
+      !Vector2Equals(snake->lastDirectionTaken, directions[3]) &&
       IsValueInArray(key, rightCases,
                      sizeof(rightCases) / sizeof(rightCases[0]))) {
     snake->direction = directions[1];
@@ -229,6 +231,7 @@ void CheckForDirectionChange(struct Snake *snake) {
   }
 
   if (!Vector2Equals(snake->direction, directions[0]) &&
+      !Vector2Equals(snake->lastDirectionTaken, directions[0]) &&
       IsValueInArray(key, downCases,
                      sizeof(downCases) / sizeof(downCases[0]))) {
     snake->direction = directions[2];
@@ -236,6 +239,7 @@ void CheckForDirectionChange(struct Snake *snake) {
   }
 
   if (!Vector2Equals(snake->direction, directions[1]) &&
+      !Vector2Equals(snake->lastDirectionTaken, directions[1]) &&
       IsValueInArray(key, leftCases,
                      sizeof(leftCases) / sizeof(leftCases[0]))) {
     snake->direction = directions[3];
