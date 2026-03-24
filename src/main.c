@@ -10,6 +10,7 @@
 int main() {
   InitWindow(WINDOW_WIDTH, WINDOW_HEIGHT, GAME_TITLE);
   InitAudioDevice();
+  const char *appPath = GetApplicationDirectory();
   int *grid = (int *)MemAlloc(NO_COLUMNS * NO_ROWS * sizeof(int));
   int currentRound = 0;
   int frameCounter = 0;
@@ -17,14 +18,20 @@ int main() {
   struct Snake snake;
   float time;
   bool gameOver, roundWon, restart, muted, paused;
-  Sound stepWav = LoadSound("assets/audio/step.wav");
-  Sound winWav = LoadSound("assets/audio/win.wav");
-  Sound powerLengthUpWav = LoadSound("assets/audio/powerLengthUp.wav");
-  Sound loseWav = LoadSound("assets/audio/lose.wav");
-  Music bgWav = LoadMusicStream("assets/audio/bg.wav");
-  Image mutedIcon = LoadImage("assets/icons/volume-mute-line.png");
+  Sound stepWav =
+      LoadSound(TextFormat("%s%s", appPath, "assets/audio/step.wav"));
+  Sound winWav = LoadSound(TextFormat("%s%s", appPath, "assets/audio/win.wav"));
+  Sound powerLengthUpWav =
+      LoadSound(TextFormat("%s%s", appPath, "assets/audio/powerLengthUp.wav"));
+  Sound loseWav =
+      LoadSound(TextFormat("%s%s", appPath, "assets/audio/lose.wav"));
+  Music bgWav =
+      LoadMusicStream(TextFormat("%s%s", appPath, "assets/audio/bg.wav"));
+  Image mutedIcon = LoadImage(
+      TextFormat("%s%s", appPath, "assets/icons/volume-mute-line.png"));
   Texture2D mutedTexture = LoadTextureFromImage(mutedIcon);
-  Texture2D logo = LoadTexture("assets/icons/logo-animated.png");
+  Texture2D logo = LoadTexture(
+      TextFormat("%s%s", appPath, "assets/icons/logo-animated.png"));
   Rectangle logoRec = {0, 0, (float)logo.width / 21, (float)logo.height};
   int logoFrame = 0;
   UnloadImage(mutedIcon);
