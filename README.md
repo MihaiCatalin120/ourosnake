@@ -1,6 +1,6 @@
 # Yo infinite snek nice
 
-Grab the ourosnake (ourosnake.exe on Windows) file and enjoy!
+Grab the appropiate ourosnake file and the assets folder and enjoy!
 
 ## Building from source
 If you want to compile a custom version of the game, follow the steps below according to your OS:
