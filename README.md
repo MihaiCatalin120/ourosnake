@@ -1,5 +1,9 @@
 ![Ourosnake title image](presentation/title.png)<br>
-![Ourosnake gameplay](presentation/ourosnake.mp4)
+
+<video width="320" height="240" controls>
+  <source src="presentation/ourosnake.mp4" type="video/mp4">
+</video>
+
 # Yo infinite snek nice
 
 Grab the appropiate ourosnake file and the assets folder and enjoy!
