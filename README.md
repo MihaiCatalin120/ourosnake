@@ -1,5 +1,5 @@
 ![Ourosnake title image](presentation/title.png)<br>
-![Ourosnake gameplay](presentation/ourosnake.gif)
+![Ourosnake gameplay](presentation/ourosnake-2x.gif)
 
 # Yo infinite snek nice
 
