@@ -25,7 +25,7 @@
 #define SNAKE_PADDING 5
 
 #define GAME_TITLE "ourosnake"
-#define PAUSE_ENABLED true
+#define PAUSE_ENABLED false
 #define CHECK_RADIUS 3
 #define MAX_TRIES_PER_CHECK_RADIUS 10
 #define ANIMATION_DURATION 180 // 60 fps * 3 seconds

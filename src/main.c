@@ -26,15 +26,19 @@ int main() {
   Sound loseWav =
       LoadSound(TextFormat("%s%s", appPath, "assets/audio/lose.wav"));
   Music bgWav =
-      LoadMusicStream(TextFormat("%s%s", appPath, "assets/audio/bg.wav"));
+      LoadMusicStream(TextFormat("%s%s", appPath, "assets/audio/bg.mp3"));
   Image mutedIcon = LoadImage(
       TextFormat("%s%s", appPath, "assets/icons/volume-mute-line.png"));
+  Image mainLogo =
+      LoadImage(TextFormat("%s%s", appPath, "assets/icons/logo.png"));
   Texture2D mutedTexture = LoadTextureFromImage(mutedIcon);
-  Texture2D logo = LoadTexture(
+  Texture2D animatedLogo = LoadTexture(
       TextFormat("%s%s", appPath, "assets/icons/logo-animated.png"));
-  Rectangle logoRec = {0, 0, (float)logo.width / 21, (float)logo.height};
+  Rectangle animatedLogoRec = {0, 0, (float)animatedLogo.width / 21,
+                               (float)animatedLogo.height};
   int logoFrame = 0;
   UnloadImage(mutedIcon);
+  SetWindowIcon(mainLogo);
   SetSoundVolume(stepWav, 0.2f);
   SetMusicVolume(bgWav, 0.5f);
   PlayMusicStream(bgWav);
@@ -55,7 +59,7 @@ int main() {
 
       if (logoFrame >= 21)
         logoFrame = 0;
-      logoRec.x = (float)logoFrame * (float)logo.width / 21;
+      animatedLogoRec.x = (float)logoFrame * (float)animatedLogo.width / 21;
     }
 
     UpdateMusicStream(bgWav);
@@ -137,7 +141,7 @@ int main() {
         DrawDebugCellValues(grid);
       }
       DrawGrid2D();
-      DrawGameHeader(&currentRound, logo, logoRec);
+      DrawGameHeader(&currentRound, animatedLogo, animatedLogoRec);
       if (roundWon) {
         DrawEndRoundBox("Round Won", "Press enter to continue", 64, 12, GREEN);
       }
@@ -155,8 +159,9 @@ int main() {
   }
 
   CloseAudioDevice();
+  UnloadImage(mainLogo);
   UnloadTexture(mutedTexture);
-  UnloadTexture(logo);
+  UnloadTexture(animatedLogo);
   UnloadMusicStream(bgWav);
   CloseWindow();
   MemFree(grid);
