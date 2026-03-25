@@ -11,8 +11,6 @@ A game about a very hungry snake... maybe too hungry<br>
   </th>
 </table>
 
-# Yo infinite snek nice
-
 Grab the appropiate ourosnake file and the assets folder and enjoy!
 
 ## Building from source
