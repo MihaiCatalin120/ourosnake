@@ -1,3 +1,4 @@
+![Ourosnake title image](assets/images/title)
 # Yo infinite snek nice
 
 Grab the appropiate ourosnake file and the assets folder and enjoy!
