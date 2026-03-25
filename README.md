@@ -2,7 +2,7 @@
 
 A game about a very hungry snake... maybe too hungry<br>
 
-<table style="border:none;">
+<table>
   <th>
     <img src="presentation/ourosnake-gameplay.gif" alt="Ourosnake gameplay" title="Ourosnake gameplay" width="300"/>
   </th>
