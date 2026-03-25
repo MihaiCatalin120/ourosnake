@@ -1,5 +1,5 @@
 ![Ourosnake title image](presentation/title.png)<br>
-![](presentation/ourosnake.mp4)
+![Ourosnake gameplay](presentation/ourosnake.mp4)
 # Yo infinite snek nice
 
 Grab the appropiate ourosnake file and the assets folder and enjoy!
