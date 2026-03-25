@@ -1,5 +1,5 @@
 ![Ourosnake title image](presentation/title.png)<br>
-![Ourosnake gameplay](presentation/ourosnake-2x.gif)
+<img src="presentation/ourosnake-2x.gif" alt="Ourosnake gameplay" title="Ourosnake gameplay" width="300"/>
 
 # Yo infinite snek nice
 
