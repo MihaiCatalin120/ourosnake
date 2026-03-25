@@ -2,7 +2,7 @@
 
 A game about a very hungry snake... maybe too hungry<br>
 
-<table>
+<table style="border:none;">
   <th>
     <img src="presentation/ourosnake-gameplay.gif" alt="Ourosnake gameplay" title="Ourosnake gameplay" width="300"/>
   </th>
@@ -11,7 +11,7 @@ A game about a very hungry snake... maybe too hungry<br>
   </th>
 </table>
 
-Grab the appropiate ourosnake file and the assets folder and enjoy!
+Grab the game by either going to the Releases tab or downloading the source code. Enjoy!
 
 ## Building from source
 If you want to compile a custom version of the game, follow the steps below according to your OS:
