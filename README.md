@@ -1,5 +1,9 @@
 ![Ourosnake title image](presentation/title.png)<br>
-<img src="presentation/ourosnake-2x.gif" alt="Ourosnake gameplay" title="Ourosnake gameplay" width="300"/>
+
+A game about a very hungry snake... maybe too hungry<br>
+
+<img src="presentation/ourosnake-gameplay.gif" alt="Ourosnake gameplay" title="Ourosnake gameplay" width="300"/>
+<img src="presentation/ourosnake-gameplay-2.gif" alt="Ourosnake gameplay" title="Ourosnake gameplay" width="300"/>
 
 # Yo infinite snek nice
 
