@@ -2,8 +2,14 @@
 
 A game about a very hungry snake... maybe too hungry<br>
 
-<img src="presentation/ourosnake-gameplay.gif" alt="Ourosnake gameplay" title="Ourosnake gameplay" width="300"/>
-<img src="presentation/ourosnake-gameplay-2.gif" alt="Ourosnake gameplay" title="Ourosnake gameplay" width="300"/>
+<table>
+  <th>
+    <img src="presentation/ourosnake-gameplay.gif" alt="Ourosnake gameplay" title="Ourosnake gameplay" width="300"/>
+  </th>
+  <th>
+    <img src="presentation/ourosnake-gameplay-2.gif" alt="Ourosnake gameplay" title="Ourosnake gameplay" width="300"/>
+  </th>
+</table>
 
 # Yo infinite snek nice
 
