@@ -15,7 +15,7 @@ struct ObstacleGenerator {
 };
 
 // Up, Right, Down, Left
-extern Vector2 directions[4];
+extern const Vector2 directions[4];
 
 void PlaySoundWithMuteCheck(
     Sound sound, bool muted); // Wrapper for PlaySound with a muted check on top
