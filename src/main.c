@@ -104,7 +104,7 @@ int main() {
 
     if (time > TIME_PER_TURN && !gameOver && !roundWon && !paused) {
       time -= TIME_PER_TURN;
-      UpdateSnakePosition(grid, &snake);
+      UpdateSnakePosition(&snake);
       int currentHeadPosition =
           grid[(int)snake.head.y * NO_COLUMNS + (int)snake.head.x];
 

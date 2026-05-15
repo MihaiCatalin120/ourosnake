@@ -1,4 +1,5 @@
 #include "raylib.h"
+#include <stdio.h>
 #ifndef UTILS_H
 #define UTILS_H
 
@@ -21,6 +22,6 @@ void PlaySoundWithMuteCheck(
     Sound sound, bool muted); // Wrapper for PlaySound with a muted check on top
 bool IsValueInArray(
     int value, int array[],
-    int length); // Check if a value is in given array (int only)
+    size_t length); // Check if a value is in given array (int only)
 
 #endif

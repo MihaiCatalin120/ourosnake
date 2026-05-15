@@ -3,7 +3,7 @@
 #include "raylib.h"
 #include "raymath.h"
 
-void UpdateSnakePosition(int *grid, struct Snake *snake) {
+void UpdateSnakePosition(struct Snake *snake) {
   // Make the step
   snake->head = Vector2Add(snake->head, snake->direction);
   snake->lastDirectionTaken = snake->direction;

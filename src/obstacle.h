@@ -1,4 +1,5 @@
 #include "utils.h"
+#include <stdio.h>
 
 #ifndef OBSTACLE_H
 #define OBSTACLE_H
@@ -9,6 +10,6 @@ void MarkObstacle(int *grid,
                                   // positions defined in the obstacle structure
 void GenerateInitialObstacles(
     int *grid,
-    int numberOfObstacles); // Put n obstacle structures on the given grid
-                            //
+    size_t numberOfObstacles); // Put n obstacle structures on the given grid
+                               //
 #endif

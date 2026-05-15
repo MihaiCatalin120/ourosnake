@@ -8,7 +8,7 @@ void PlaySoundWithMuteCheck(Sound sound, bool muted) {
     PlaySound(sound);
 }
 
-bool IsValueInArray(int value, int array[], int length) {
+bool IsValueInArray(int value, int array[], size_t length) {
   for (size_t i = 0; i < length; i++) {
     if (value == array[i])
       return true;

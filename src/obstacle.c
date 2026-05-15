@@ -22,7 +22,7 @@ void MarkObstacle(int *grid, struct ObstacleGenerator generator) {
   }
 }
 
-void GenerateInitialObstacles(int *grid, int numberOfObstacles) {
+void GenerateInitialObstacles(int *grid, size_t numberOfObstacles) {
   Vector2 endDirection = {0, 0};
 
   for (size_t i = 0; i < numberOfObstacles; i++) {
@@ -32,7 +32,8 @@ void GenerateInitialObstacles(int *grid, int numberOfObstacles) {
     generator.startPosition.y = (int)GetRandomValue(0, NO_ROWS - 1);
 
     size_t moveNumber;
-    for (moveNumber = 0; moveNumber < GetRandomValue(3, 6); moveNumber++) {
+    for (moveNumber = 0; moveNumber < (size_t)GetRandomValue(3, 6);
+         moveNumber++) {
       generator.moves[moveNumber] = directions[GetRandomValue(0, 3)];
     }
     generator.moves[moveNumber] = endDirection;

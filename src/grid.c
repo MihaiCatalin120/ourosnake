@@ -9,7 +9,7 @@ void UpdateCellLives(int *grid, struct Snake snake) {
     for (size_t x = 0; x < NO_COLUMNS; x += 1) {
       const int gridPosTranslated = y * NO_COLUMNS + x;
 
-      if ((int)snake.head.x == x && (int)snake.head.y == y) {
+      if ((size_t)snake.head.x == x && (size_t)snake.head.y == y) {
         if (grid[gridPosTranslated] == CELL_EMPTY ||
             grid[gridPosTranslated] == CELL_POWERUP_LENGTH_INCREASE)
           grid[gridPosTranslated] = snake.length;
@@ -89,7 +89,7 @@ void IncreaseSnakeLength(int *grid, struct Snake *snake) {
 }
 
 Vector2 GetValidGridPosition(int *grid, int checkRadius,
-                             int maxRetriesPerRadius) {
+                             size_t maxRetriesPerRadius) {
   Vector2 result = {GetRandomValue(0, NO_COLUMNS - 1),
                     GetRandomValue(0, NO_ROWS - 1)};
   if (IsValidSpawnPoint(grid, result, checkRadius))

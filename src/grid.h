@@ -1,4 +1,5 @@
 #include "snake.h"
+#include <stdio.h>
 
 #ifndef GRID_H
 #define GRID_H
@@ -14,5 +15,5 @@ void GeneratePowerupLengthIncrease(
 bool IsValidSpawnPoint(int *grid, Vector2 head, int checkRadius);
 void IncreaseSnakeLength(int *grid, struct Snake *snake);
 Vector2 GetValidGridPosition(int *grid, int checkRadius,
-                             int maxRetriesPerRadius);
+                             size_t maxRetriesPerRadius);
 #endif
